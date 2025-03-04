@@ -1,0 +1,4 @@
+image_id,filename,timestamp,dart_count,board_state,dart1_segment,dart1_ring,dart2_segment,dart2_ring,dart3_segment,dart3_ring,notes
+540d2cae-c1a6-4cd2-bcd8-8f645e8d668a,dart_20250303_220357_540d2cae.jpg,20250303_220357,1,partial,miss,miss,,,,,
+06d571d7-c989-4496-aba0-e121d2e7ac3f,dart_20250303_220438_06d571d7.jpg,20250303_220438,2,partial,miss,miss,miss,miss,,,
+695ced6e-0dcd-4730-9308-89afe3c62f15,dart_20250303_220536_695ced6e.jpg,20250303_220536,3,full,miss,miss,miss,miss,18,single,
