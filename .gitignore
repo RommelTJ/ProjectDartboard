@@ -177,3 +177,9 @@ cython_debug/
 .idea/**
 *.iml
 
+# Image files - ignore future images but keep existing ones
+*.jpg
+*.jpeg
+*.png
+*.gif
+
