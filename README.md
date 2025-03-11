@@ -34,8 +34,56 @@ based on game rules, and provides visual feedback through cabinet lighting.
     - Position LED strips at top of cabinet for even illumination
     - Calibrate camera view to dartboard coordinates
 
-2. **Training**
-    - TBD
+2. **Training Methodology**
+
+    ### Object Detection with YOLO
+    - **What is YOLO?**: "You Only Look Once" is a state-of-the-art, real-time object detection algorithm
+    - **How it works**: YOLO processes the entire image in a single pass through a neural network, making it extremely fast
+    - **YOLOv11**: We're using the latest version which offers improved accuracy and performance over previous iterations
+    
+    ### Data Collection & Preparation
+    - Collected over 1,000 images of dart throws using our ceiling-mounted camera
+    - Created a comprehensive CSV dataset with:
+      - Timestamp information
+      - Dart count (0-3 darts)
+      - Board state (empty, partial, full)
+      - Dart positions (segment and ring for each dart)
+    
+    ### YOLO Annotation Format
+    - YOLO requires specific formatting for training:
+      - One text file per image with the same name
+      - Each line represents one object: `class x_center y_center width height`
+      - Class: A number representing the type of object (0 = dart)
+      - Coordinates: Normalized between 0-1 relative to image dimensions
+      - Example: `0 0.5 0.6 0.05 0.1` (dart centered at 50% width, 60% height, with 5% width and 10% height)
+    
+    ### Two-Phase Training Approach
+    
+    #### Phase 1: Initial Model (Current)
+    - **Challenge**: Our dataset lacks explicit bounding box information for darts
+    - **Approach**: Use approximate positions based on our dart position data
+    - **Limitations**: Model will likely struggle with precise dart localization
+    - **Purpose**: Establish training pipeline, learn model development process, and evaluate baseline performance
+    - **Implementation**: 
+      - Created YOLO dataset with 80/20 train/validation split
+      - Converted 1,000+ images to JPEG format for compatibility
+      - Training with Docker container using YOLOv8 nano model:
+        ```bash
+        docker run --rm -v "$(pwd):/workspace" ultralytics/ultralytics:latest \
+          yolo detect train \
+          data=/workspace/yolo_dataset/dataset.yaml \
+          model=yolov8n.pt \
+          epochs=20 \
+          imgsz=2160 \
+          batch=4 
+        ```
+      - Running on CPU with full 4K resolution (3840 × 2160) for maximum detail
+    
+    #### Phase 2: Refined Model (Future Work)
+    - **Improvement**: Manually annotate a subset of images with precise bounding boxes
+    - **Tools**: Use annotation software like LabelImg or CVAT
+    - **Expected Outcome**: Significantly improved dart detection accuracy
+    - **Additional Features**: May add dartboard detection to enable automatic coordinate calibration
 
 2. **Game Workflow**
     - Activate scoring mode via software interface
