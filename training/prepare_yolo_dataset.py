@@ -151,21 +151,49 @@ def process_dataset(data, dataset_type):
             # Add each dart (we're only tracking dart positions, not values)
             dart_count = int(item['dart_count'])
             
-            if dart_count >= 1 and parse_position(item['dart1_segment'], item['dart1_ring']):
-                # In real implementation, we would calculate precise x,y,w,h
-                # For now we'll use placeholder values that need to be refined
-                # Format: class x_center y_center width height
-                # Note: These values need to be normalized between 0-1
-                # This is a simplified placeholder and needs to be replaced with actual detection
-                label_file.write(f"0 0.5 0.5 0.05 0.05\n")
+            # Define dart dimensions in normalized coordinates
+            # Darts are long and thin objects
+            box_width = 0.05  # Width relative to image width
+            box_height = 0.1  # Height relative to image height (darts are longer than wide)
             
-            if dart_count >= 2 and parse_position(item['dart2_segment'], item['dart2_ring']):
-                # Same placeholder for dart 2
-                label_file.write(f"0 0.55 0.5 0.05 0.05\n")
+            # Process dart 1
+            if dart_count >= 1:
+                on_board, segment, ring = parse_position(item['dart1_segment'], item['dart1_ring'])
+                if on_board:
+                    # Get estimated position based on segment and ring
+                    x, y = estimate_dart_position(segment, ring)
+                    # Format: class x_center y_center width height
+                    label_file.write(f"0 {x:.6f} {y:.6f} {box_width:.6f} {box_height:.6f}\n")
             
-            if dart_count >= 3 and parse_position(item['dart3_segment'], item['dart3_ring']):
-                # Same placeholder for dart 3
-                label_file.write(f"0 0.6 0.5 0.05 0.05\n")
+            # Process dart 2
+            if dart_count >= 2:
+                on_board, segment, ring = parse_position(item['dart2_segment'], item['dart2_ring'])
+                if on_board:
+                    # Get estimated position based on segment and ring
+                    x, y = estimate_dart_position(segment, ring)
+                    # Add tiny offset to avoid exact overlap with first dart
+                    x += random.uniform(-0.02, 0.02)
+                    y += random.uniform(-0.02, 0.02)
+                    # Ensure coordinates stay within bounds
+                    x = max(0.01, min(0.99, x))
+                    y = max(0.01, min(0.99, y))
+                    # Format: class x_center y_center width height
+                    label_file.write(f"0 {x:.6f} {y:.6f} {box_width:.6f} {box_height:.6f}\n")
+            
+            # Process dart 3
+            if dart_count >= 3:
+                on_board, segment, ring = parse_position(item['dart3_segment'], item['dart3_ring'])
+                if on_board:
+                    # Get estimated position based on segment and ring
+                    x, y = estimate_dart_position(segment, ring)
+                    # Add tiny offset to avoid exact overlap
+                    x += random.uniform(-0.02, 0.02)
+                    y += random.uniform(-0.02, 0.02)
+                    # Ensure coordinates stay within bounds
+                    x = max(0.01, min(0.99, x))
+                    y = max(0.01, min(0.99, y))
+                    # Format: class x_center y_center width height
+                    label_file.write(f"0 {x:.6f} {y:.6f} {box_width:.6f} {box_height:.6f}\n")
 
 def create_yaml_config(total_images, train_count):
     """Create YAML configuration file for training"""
