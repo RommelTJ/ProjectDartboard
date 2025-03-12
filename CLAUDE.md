@@ -2,7 +2,9 @@
 
 ## Project Structure
 - `app/` - Final application for dockerization and deployment
-- `training/` - TensorFlow training data and models
+- `training/` - Training data, models, and object detection
+    - `phaseOneSmallDataset/` - Small dataset for initial manual annotation
+    - `phaseTwoFullDataset/` - Full dataset for comprehensive training
 - `playground/` - Testing scripts for camera interaction and development
 
 ## Camera API Usage
@@ -32,18 +34,18 @@ The working endpoint is:
 
 ### Dataset Structure
 The training dataset has the following structure:
-- Image files stored in `training/images/`
-- Metadata in `training/dart_dataset.csv`
+- Image files stored in `training/phaseOneSmallDataset/images/` and `training/phaseTwoFullDataset/images/`
+- Metadata in `training/phaseOneSmallDataset/dart_dataset.csv` and `training/phaseTwoFullDataset/dart_dataset.csv`
 - CSV columns include:
-  - image_id - Unique identifier
-  - filename - Path to image file
-  - timestamp - When image was captured
-  - dart_count - Number of darts on board (0-3)
-  - board_state - 'empty', 'partial', 'full'
-  - dart1_segment, dart1_ring - Position data for first dart
-  - dart2_segment, dart2_ring - Position data for second dart 
-  - dart3_segment, dart3_ring - Position data for third dart
-  - notes - Additional information
+    - image_id - Unique identifier
+    - filename - Path to image file
+    - timestamp - When image was captured
+    - dart_count - Number of darts on board (0-3)
+    - board_state - 'empty', 'partial', 'full'
+    - dart1_segment, dart1_ring - Position data for first dart
+    - dart2_segment, dart2_ring - Position data for second dart
+    - dart3_segment, dart3_ring - Position data for third dart
+    - notes - Additional information
 
 ### Running Data Collection
 
@@ -62,10 +64,56 @@ This will:
 ```bash
 # Install dependencies for playground scripts
 pip install -r playground/requirements.txt
+
+# Install dependencies for training scripts
+pip install -r training/requirements.txt
 ```
 
+## Object Detection Training
+
+### Revised Approach: Manual Annotation with Cross-Platform Optimization
+
+After initial attempts with estimated positions failed to produce reliable models, we've implemented a cross-platform optimization approach:
+
+1. **Manual Annotation with Label Studio**
+    - Set up Label Studio for annotation:
+      ```bash
+      docker pull heartexlabs/label-studio:latest
+      docker run -it -p 8080:8080 -v $(pwd)/labelStudioData:/label-studio/data heartexlabs/label-studio:latest
+      ```
+    - Manually annotate 200 high-quality images with precise oriented bounding boxes
+    - Export annotations in "YOLOv8 OBB" format
+
+2. **Cross-Platform Training Pipeline**
+    - **Training (Windows with RTX 3080)**
+      ```bash
+      # On Windows with RTX 3080
+      yolo detect train model=yolo11n-obb.pt data=C:\path\to\dataset.yaml epochs=50 imgsz=2160 batch=8
+      ```
+    - **Export (macOS)**
+      ```bash
+      # On macOS
+      yolo export model=/path/to/best.pt format=onnx
+      ```
+    - **Deployment (Ubuntu Mini PC)**
+        - Deploy using ONNX Runtime on the Ubuntu mini PC
+        - Package as Docker container for easy deployment
+
+3. **Performance Metrics**
+    - Current model (50 images): 89.5% mAP50, 69.3% mAP50-95
+    - Training time: 29 minutes on RTX 3080 (vs 2.6 hours on MacBook Pro)
+    - Inference speed: 17.6ms per image on CPU
+    - Model size: 11.3MB (ONNX format)
+
+4. **Advantages of YOLOv11n-OBB**
+    - OBB capability for detecting darts at various angles
+    - Lightweight (2.7M parameters)
+    - Fast inference time on CPU deployment
+    - Solid performance even with limited training data
+
 ## Future Tasks
-- Process collected dataset for TensorFlow training
-- Train object detection model to identify darts and positions
+- Complete annotation of 1000 images for improved model performance
 - Implement scoring logic for Cricket game
+- Develop web-based interface for real-time scoring
 - Integrate with LED lighting feedback system
+- Package as containerized application for deployment
