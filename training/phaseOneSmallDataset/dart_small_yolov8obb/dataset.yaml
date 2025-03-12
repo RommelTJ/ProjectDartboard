@@ -1,7 +1,6 @@
-path: ../training/phaseOneSmallDataset/dart_small_yolov8obb  # dataset root directory
-train: images/train  # train images (relative to 'path')
-val: images/val  # val images (relative to 'path')
-
-# Classes
+path: /Users/rommel/code/work/chatmeter/ProjectDartboard/training/phaseOneSmallDataset/dart_small_yolov8obb  # dataset root directory
+train: images/train  # train images
+val: images/val  # val images
+labels: labels  # Define the labels directory explicitly
 names:
   0: dart

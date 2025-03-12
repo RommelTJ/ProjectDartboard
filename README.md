@@ -90,7 +90,7 @@ based on game rules, and provides visual feedback through cabinet lighting.
               - Fast inference time (4.4ms on GPU, reasonable speed on your mini PC)
               - Still provides solid performance (78.4 mAP@50)
       - Train for 50 epochs
-        - Train: `yolo detect train model=yolov11n-obb.pt data=/path/to/dataset.yaml epochs=50 imgsz=2160`
+        - Train: `yolo detect train model=yolo11n-obb.pt data=/Users/rommel/code/work/chatmeter/ProjectDartboard/training/phaseOneSmallDataset/dart_small_yolov8obb/dataset.yaml epochs=50 imgsz=2160`
         - Export / Optimize: `yolo export model=runs/detect/train/weights/best.pt format=onnx`
       - Implement basic detection
     - Then, if we have time, rinse and repeat with the entire image dataset
