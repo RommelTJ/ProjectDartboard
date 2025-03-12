@@ -12,7 +12,7 @@ from pathlib import Path
 
 # Define paths
 DATASET_CSV = "dart_dataset.csv"
-IMAGES_DIR = "images"
+IMAGES_DIR = "phaseTwoFullDataset/images"
 OUTPUT_DIR = "yolo_dataset"
 TRAIN_RATIO = 0.8  # 80% for training, 20% for validation
 
@@ -30,7 +30,7 @@ def parse_position(segment, ring):
     # For simplicity, we consider a dart 'on board' if it's not a miss
     if segment == 'miss' and ring == 'miss':
         return False, None, None
-        
+
     # Dart is on board, need to estimate position
     return True, segment, ring
 
@@ -40,16 +40,16 @@ def estimate_dart_position(segment, ring):
     # Approximate center of dartboard in normalized coordinates
     board_center_x = 0.65
     board_center_y = 0.4
-    
+
     # Approximate radius of dartboard in normalized coordinates
     board_radius = 0.25
-    
+
     # If missing segment or ring info, return board center with small random offset
     if segment is None or ring is None:
         offset_x = random.uniform(-0.05, 0.05)
         offset_y = random.uniform(-0.05, 0.05)
         return board_center_x + offset_x, board_center_y + offset_y
-    
+
     # Convert segment number to angle (degrees)
     # Segment 20 is at top (0 degrees), then counter-clockwise
     segment_map = {
@@ -58,7 +58,7 @@ def estimate_dart_position(segment, ring):
         '16': 234, '8': 252, '11': 270, '14': 288, '9': 306, '12': 324, '5': 342,
         'bull': 0  # Bull is at center, angle doesn't matter
     }
-    
+
     # Convert ring to relative distance from center
     ring_map = {
         'miss': 1.1,  # Outside the board
@@ -68,7 +68,7 @@ def estimate_dart_position(segment, ring):
         'outer_bull': 0.2,
         'inner_bull': 0.1
     }
-    
+
     # For bull, use special handling
     if segment == 'bull':
         if ring == 'inner_bull':
@@ -77,7 +77,7 @@ def estimate_dart_position(segment, ring):
             offset_x = random.uniform(-0.05, 0.05)
             offset_y = random.uniform(-0.05, 0.05)
             return board_center_x + offset_x, board_center_y + offset_y
-    
+
     # Get angle and radius
     try:
         angle_deg = segment_map.get(segment, 0)
@@ -87,22 +87,22 @@ def estimate_dart_position(segment, ring):
         offset_x = random.uniform(-0.1, 0.1)
         offset_y = random.uniform(-0.1, 0.1)
         return board_center_x + offset_x, board_center_y + offset_y
-    
+
     # Convert angle to radians
     angle_rad = math.radians(angle_deg)
-    
+
     # Calculate position based on angle and distance
     rel_x = math.sin(angle_rad) * board_radius * radius_factor
     rel_y = -math.cos(angle_rad) * board_radius * radius_factor
-    
+
     # Apply position relative to board center
     x = board_center_x + rel_x
     y = board_center_y + rel_y
-    
+
     # Ensure values stay within [0,1] range
     x = max(0.0, min(1.0, x))
     y = max(0.0, min(1.0, y))
-    
+
     return x, y
 
 def convert_to_yolo_format():
@@ -113,22 +113,22 @@ def convert_to_yolo_format():
         reader = csv.DictReader(csv_file)
         for row in reader:
             dart_data.append(row)
-    
+
     # Shuffle data
     random.shuffle(dart_data)
-    
+
     # Split into train and validation sets
     split_idx = int(len(dart_data) * TRAIN_RATIO)
     train_data = dart_data[:split_idx]
     val_data = dart_data[split_idx:]
-    
+
     # Process each set
     process_dataset(train_data, "train")
     process_dataset(val_data, "val")
-    
+
     # Create dataset.yaml file
     create_yaml_config(len(dart_data), split_idx)
-    
+
     print(f"Dataset prepared: {len(train_data)} training images, {len(val_data)} validation images")
 
 def process_dataset(data, dataset_type):
@@ -137,25 +137,25 @@ def process_dataset(data, dataset_type):
         # Copy image to the destination folder
         src_img = os.path.join(IMAGES_DIR, item['filename'])
         dst_img = os.path.join(OUTPUT_DIR, "images", dataset_type, item['filename'])
-        
+
         if os.path.exists(src_img):
             shutil.copy2(src_img, dst_img)
         else:
             print(f"Warning: Image {src_img} not found")
             continue
-        
+
         # Create label file
         label_path = os.path.join(OUTPUT_DIR, "labels", dataset_type, Path(item['filename']).stem + ".txt")
-        
+
         with open(label_path, 'w') as label_file:
             # Add each dart (we're only tracking dart positions, not values)
             dart_count = int(item['dart_count'])
-            
+
             # Define dart dimensions in normalized coordinates
             # Darts are long and thin objects
             box_width = 0.05  # Width relative to image width
             box_height = 0.1  # Height relative to image height (darts are longer than wide)
-            
+
             # Process dart 1
             if dart_count >= 1:
                 on_board, segment, ring = parse_position(item['dart1_segment'], item['dart1_ring'])
@@ -164,7 +164,7 @@ def process_dataset(data, dataset_type):
                     x, y = estimate_dart_position(segment, ring)
                     # Format: class x_center y_center width height
                     label_file.write(f"0 {x:.6f} {y:.6f} {box_width:.6f} {box_height:.6f}\n")
-            
+
             # Process dart 2
             if dart_count >= 2:
                 on_board, segment, ring = parse_position(item['dart2_segment'], item['dart2_ring'])
@@ -179,7 +179,7 @@ def process_dataset(data, dataset_type):
                     y = max(0.01, min(0.99, y))
                     # Format: class x_center y_center width height
                     label_file.write(f"0 {x:.6f} {y:.6f} {box_width:.6f} {box_height:.6f}\n")
-            
+
             # Process dart 3
             if dart_count >= 3:
                 on_board, segment, ring = parse_position(item['dart3_segment'], item['dart3_ring'])
@@ -198,7 +198,7 @@ def process_dataset(data, dataset_type):
 def create_yaml_config(total_images, train_count):
     """Create YAML configuration file for training"""
     yaml_path = os.path.join(OUTPUT_DIR, "dataset.yaml")
-    
+
     with open(yaml_path, 'w') as yaml_file:
         yaml_file.write(f"""# Dart Detection Dataset
 path: {os.path.abspath(OUTPUT_DIR)}
