@@ -72,6 +72,9 @@ based on game rules, and provides visual feedback through cabinet lighting.
     #### Revised Approach: Manual Annotation
     - **New Strategy**: Manually annotate a small subset of images with precise bounding boxes
       - Use Label Studio to manually annotate 50 high-quality images
+        - https://github.com/HumanSignal/label-studio 
+        - docker pull heartexlabs/label-studio:latest
+        - docker run -it -p 8080:8080 -v $(pwd)/labelStudioData:/label-studio/data heartexlabs/label-studio:latest
       - Draw precise bounding boxes around each dart
       - Export as "YOLOv8 OBB" export format in Label Studio
       - Split into training/validation sets (80/20 split - 40 training, 10 validation)
@@ -92,6 +95,14 @@ based on game rules, and provides visual feedback through cabinet lighting.
       - Implement basic detection
     - Then, if we have time, rinse and repeat with the entire image dataset
     - Then, if we have time, experiment with other models
+    - Note: Gemini Pro has vision abilities capable of automatically drawing bounding boxes, but I decided not to pursue this option because:
+      - Size limitations. Dart tips are extremely small objects. I had concerns about Gemini's accuracy.
+      - Occlusion issues. Darts overlap or cause shadows. I threw the darts so I know how they landed. I don't think a 
+        general vision model can handle this.
+      - Precision requirements. Dartboard scoring is serious business. Friendships are on the line. You need 
+        pixel-level accuracy for where the dart tips land.
+      - Consistent annotation style. By hand, I can draw boxes using a similar style, and I can record the orientation 
+        of the darts. I don't think a general vision model can handle this.
 
 2. **Game Workflow**
     - Activate scoring mode via software interface
