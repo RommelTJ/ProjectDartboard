@@ -92,6 +92,7 @@ based on game rules, and provides visual feedback through cabinet lighting.
       - Train for 50 epochs
         - Train: `yolo detect train model=yolo11n-obb.pt data=/Users/rommel/code/work/chatmeter/ProjectDartboard/training/phaseOneSmallDataset/test_yolo_dataset/data.yaml epochs=50 imgsz=2160`
                  `yolo detect train model=yolo11n-obb.pt data=C:\Users\me\Documents\GitHub\ProjectDartboard\training\phaseOneSmallDataset\test_yolo_dataset\data.yaml epochs=50 imgsz=2160 batch=8`
+                 `yolo detect train model=yolo11n-obb.pt data=C:\Users\me\Documents\GitHub\ProjectDartboard\training\phaseOneSmallDataset\test_yolo_dataset\data.yaml epochs=50 imgsz=2160 batch=4`
         - Export / Optimize: `yolo export model=runs/detect/train/weights/best.pt format=onnx`
       - Implement basic detection
     - Then, if we have time, rinse and repeat with the entire image dataset
