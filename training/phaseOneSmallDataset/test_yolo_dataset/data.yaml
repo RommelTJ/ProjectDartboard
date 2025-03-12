@@ -1,4 +1,4 @@
-path: /Users/rommel/code/work/chatmeter/ProjectDartboard/training/phaseOneSmallDataset/test_yolo_dataset
+path: C:\Users\me\Documents\GitHub\ProjectDartboard\training\phaseOneSmallDataset\test_yolo_dataset
 train: train/images
 val: val/images
 
