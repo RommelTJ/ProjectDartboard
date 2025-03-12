@@ -2,7 +2,9 @@
 
 ## Project Structure
 - `app/` - Final application for dockerization and deployment
-- `training/` - TensorFlow training data and models
+- `training/` - Training data, models, and object detection
+  - `phaseOneSmallDataset/` - Small dataset for initial manual annotation
+  - `phaseTwoFullDataset/` - Full dataset for comprehensive training
 - `playground/` - Testing scripts for camera interaction and development
 
 ## Camera API Usage
@@ -32,8 +34,8 @@ The working endpoint is:
 
 ### Dataset Structure
 The training dataset has the following structure:
-- Image files stored in `training/images/`
-- Metadata in `training/dart_dataset.csv`
+- Image files stored in `training/phaseOneSmallDataset/images/` and `training/phaseTwoFullDataset/images/`
+- Metadata in `training/phaseOneSmallDataset/dart_dataset.csv` and `training/phaseTwoFullDataset/dart_dataset.csv`
 - CSV columns include:
   - image_id - Unique identifier
   - filename - Path to image file
@@ -62,10 +64,47 @@ This will:
 ```bash
 # Install dependencies for playground scripts
 pip install -r playground/requirements.txt
+
+# Install dependencies for training scripts
+pip install -r training/requirements.txt
 ```
 
+## Object Detection Training
+
+### Revised Approach: Manual Annotation
+
+After initial attempts with estimated positions failed to produce reliable models, we're implementing a manual annotation approach:
+
+1. **Manual Annotation with Label Studio**
+   - Set up Label Studio for annotation:
+     ```bash
+     docker pull heartexlabs/label-studio:latest
+     docker run -it -p 8080:8080 -v $(pwd)/labelStudioData:/label-studio/data heartexlabs/label-studio:latest
+     ```
+   - Manually annotate 50 high-quality images with precise bounding boxes
+   - Export annotations in "YOLOv8 OBB" format
+
+2. **Training with YOLOv11**
+   - Using YOLOv11n-OBB model for oriented bounding box detection
+   - Split dataset: 80/20 (40 training, 10 validation images)
+   - Train command:
+     ```bash
+     yolo detect train model=yolov11n-obb.pt data=/path/to/dataset.yaml epochs=50 imgsz=2160
+     ```
+   - Export to ONNX format:
+     ```bash
+     yolo export model=runs/detect/train/weights/best.pt format=onnx
+     ```
+
+3. **Advantages of YOLOv11n-OBB**
+   - OBB capability for detecting darts at various angles
+   - Lightweight (2.7M parameters)
+   - Fast inference time (4.4ms on GPU)
+   - Solid performance (78.4 mAP@50)
+
 ## Future Tasks
-- Process collected dataset for TensorFlow training
-- Train object detection model to identify darts and positions
+- Train initial model on small manually annotated dataset
+- Test detection performance and adjust as needed
+- If time permits, expand to full dataset annotation
 - Implement scoring logic for Cricket game
 - Integrate with LED lighting feedback system
