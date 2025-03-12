@@ -1,0 +1,7 @@
+path: ../training/phaseOneSmallDataset/dart_small_yolov8obb  # dataset root directory
+train: images/train  # train images (relative to 'path')
+val: images/val  # val images (relative to 'path')
+
+# Classes
+names:
+  0: dart
