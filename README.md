@@ -96,7 +96,7 @@ based on game rules, and provides visual feedback through cabinet lighting.
             - `yolo detect train model=yolo11n-obb.pt data=C:\Users\me\Documents\GitHub\ProjectDartboard\training\phaseOneSmallDataset\test_yolo_dataset\data.yaml epochs=50 imgsz=2160 batch=4`
             - `yolo detect train model=yolo11n-obb.pt data=C:\Users\me\Documents\GitHub\ProjectDartboard\training\phaseOneSmallDataset\test_yolo_dataset\data.yaml epochs=50 imgsz=2160 batch=8 val=False` followed by 
               `yolo val model=C:\Users\me\Documents\GitHub\ProjectDartboard\runs\obb\train9\weights\best.pt data=C:\Users\me\Documents\GitHub\ProjectDartboard\training\phaseOneSmallDataset\test_yolo_dataset\data.yaml imgsz=2160` (replace "trainX" with latest training data)
-        - Export / Optimize: `yolo export model=runs/detect/train/weights/best.pt format=onnx` (yolo export model=C:\Users\me\Documents\GitHub\ProjectDartboard\runs\obb\train9\weights\best.pt format=onnx)
+        - Export / Optimize: `yolo export model=runs/detect/train/weights/best.pt format=onnx` (`yolo export model=/Users/rommel/code/work/chatmeter/ProjectDartboard/runs/obb/train9/weights/best.pt format=onnx`)
       - Implement basic detection
     - Then, if we have time, rinse and repeat with the entire image dataset
     - Then, if we have time, experiment with other models
