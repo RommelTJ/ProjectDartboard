@@ -90,10 +90,13 @@ based on game rules, and provides visual feedback through cabinet lighting.
               - Fast inference time (4.4ms on GPU, reasonable speed on your mini PC)
               - Still provides solid performance (78.4 mAP@50)
       - Train for 50 epochs
-        - Train: `yolo detect train model=yolo11n-obb.pt data=/Users/rommel/code/work/chatmeter/ProjectDartboard/training/phaseOneSmallDataset/test_yolo_dataset/data.yaml epochs=50 imgsz=2160`
-                 `yolo detect train model=yolo11n-obb.pt data=C:\Users\me\Documents\GitHub\ProjectDartboard\training\phaseOneSmallDataset\test_yolo_dataset\data.yaml epochs=50 imgsz=2160 batch=8`
-                 `yolo detect train model=yolo11n-obb.pt data=C:\Users\me\Documents\GitHub\ProjectDartboard\training\phaseOneSmallDataset\test_yolo_dataset\data.yaml epochs=50 imgsz=2160 batch=4`
-        - Export / Optimize: `yolo export model=runs/detect/train/weights/best.pt format=onnx`
+        - Train: 
+            - `yolo detect train model=yolo11n-obb.pt data=/Users/rommel/code/work/chatmeter/ProjectDartboard/training/phaseOneSmallDataset/test_yolo_dataset/data.yaml epochs=50 imgsz=2160`
+            - `yolo detect train model=yolo11n-obb.pt data=C:\Users\me\Documents\GitHub\ProjectDartboard\training\phaseOneSmallDataset\test_yolo_dataset\data.yaml epochs=50 imgsz=2160 batch=8`
+            - `yolo detect train model=yolo11n-obb.pt data=C:\Users\me\Documents\GitHub\ProjectDartboard\training\phaseOneSmallDataset\test_yolo_dataset\data.yaml epochs=50 imgsz=2160 batch=4`
+            - `yolo detect train model=yolo11n-obb.pt data=C:\Users\me\Documents\GitHub\ProjectDartboard\training\phaseOneSmallDataset\test_yolo_dataset\data.yaml epochs=50 imgsz=2160 batch=8 val=False` followed by 
+              `yolo val model=C:\Users\me\Documents\GitHub\ProjectDartboard\runs\obb\train9\weights\best.pt data=C:\Users\me\Documents\GitHub\ProjectDartboard\training\phaseOneSmallDataset\test_yolo_dataset\data.yaml imgsz=2160` (replace "trainX" with latest training data)
+        - Export / Optimize: `yolo export model=runs/detect/train/weights/best.pt format=onnx` (yolo export model=C:\Users\me\Documents\GitHub\ProjectDartboard\runs\obb\train9\weights\best.pt format=onnx)
       - Implement basic detection
     - Then, if we have time, rinse and repeat with the entire image dataset
     - Then, if we have time, experiment with other models
@@ -132,3 +135,51 @@ based on game rules, and provides visual feedback through cabinet lighting.
 ## License
 
 MIT License
+
+DartVision Project: Revised Approach
+Updated Training Strategy
+
+Expand dataset from 50 to 200 manually annotated images
+Continue using YOLOv11n-OBB model for oriented bounding box detection
+Train on RTX 3080 GPU with batch size 8
+Expected training time: ~2 hours (vs. 8-10 hours on MacBook Pro)
+Export to ONNX format for optimized inference
+
+Performance Benefits
+
+Current model already shows strong metrics (89.5% mAP50, 69.3% mAP50-95)
+Larger dataset will improve detection accuracy for challenging scenarios:
+
+Darts at unusual angles
+Multiple darts close together
+Varying lighting conditions
+Different board states
+
+
+
+Implementation Timeline
+
+Dataset Expansion & Training: Complete by end of day
+
+Annotate additional 150 images in Label Studio
+Train with the same parameters as successful run
+Export optimized model
+
+
+Cricket App Development: 24 hours
+
+Backend detection system (6-8 hours)
+Cricket scoring logic (4-6 hours)
+Simple web interface (6-8 hours)
+Integration and testing (4-6 hours)
+
+
+
+Key Advantages
+
+GPU acceleration enables 5.4x faster training, allowing for larger dataset
+Improved model accuracy will create a more reliable and impressive demo
+Better detection means less time handling edge cases, more time for polish
+Creates a stronger technical foundation for future expansion
+
+This revised approach prioritizes model quality while still allowing sufficient time for developing a compelling hackathon demo.
