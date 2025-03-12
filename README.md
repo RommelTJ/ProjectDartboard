@@ -57,33 +57,41 @@ based on game rules, and provides visual feedback through cabinet lighting.
       - Coordinates: Normalized between 0-1 relative to image dimensions
       - Example: `0 0.5 0.6 0.05 0.1` (dart centered at 50% width, 60% height, with 5% width and 10% height)
     
-    ### Two-Phase Training Approach
+    ### Our Learning Journey: Trial and Error
     
-    #### Phase 1: Initial Model (Current)
-    - **Challenge**: Our dataset lacks explicit bounding box information for darts
-    - **Approach**: Use approximate positions based on our dart position data
-    - **Limitations**: Model will likely struggle with precise dart localization
-    - **Purpose**: Establish training pipeline, learn model development process, and evaluate baseline performance
+    #### First Attempt: Estimated Positions (Failed)
+    - **Challenge**: Our dataset lacked explicit bounding box information for darts
+    - **Approach**: Created estimated positions based on dart segment/ring data
     - **Implementation**: 
+      - Wrote a script to convert segment/ring info to approximate x,y coordinates
       - Created YOLO dataset with 80/20 train/validation split
-      - Converted 1,000+ images to JPEG format for compatibility
-      - Training with Docker container using YOLOv8 nano model:
-        ```bash
-        docker run --rm -v "$(pwd):/workspace" ultralytics/ultralytics:latest \
-          yolo detect train \
-          data=/workspace/yolo_dataset/dataset.yaml \
-          model=yolov8n.pt \
-          epochs=20 \
-          imgsz=2160 \
-          batch=4 
-        ```
-      - Running on CPU with full 4K resolution (3840 × 2160) for maximum detail
+      - Converted 1,000+ images to JPEG format for training
+    - **Results**: After multiple training attempts, the model failed to detect darts reliably
+    - **Lesson Learned**: Accurate bounding box annotations are essential - there's no shortcut!
     
-    #### Phase 2: Refined Model (Future Work)
-    - **Improvement**: Manually annotate a subset of images with precise bounding boxes
-    - **Tools**: Use annotation software like LabelImg or CVAT
-    - **Expected Outcome**: Significantly improved dart detection accuracy
-    - **Additional Features**: May add dartboard detection to enable automatic coordinate calibration
+    #### Revised Approach: Manual Annotation
+    - **New Strategy**: Manually annotate a small subset of images with precise bounding boxes
+      - Use Label Studio to manually annotate 50 high-quality images
+      - Draw precise bounding boxes around each dart
+      - Export as "YOLOv8 OBB" export format in Label Studio
+      - Split into training/validation sets (80/20 split - 40 training, 10 validation)
+      - Create YAML configuration file
+      - Use the YOLOv11n-OBB model as a starting point
+        - Why?
+          - OBB (Oriented Bounding Box) capability
+            This is perfect for detecting darts at various angles on your dartboard, which will give you better 
+            accuracy for edge cases in cricket scoring.
+          - Size and speed
+            The nano version (YOLOv11n-obb) is the smallest and fastest in the OBB family:
+              - Only 2.7M parameters (very lightweight)
+              - Fast inference time (4.4ms on GPU, reasonable speed on your mini PC)
+              - Still provides solid performance (78.4 mAP@50)
+      - Train for 50 epochs
+        - Train: `yolo detect train model=yolov11n-obb.pt data=/path/to/dataset.yaml epochs=50 imgsz=2160`
+        - Export / Optimize: `yolo export model=runs/detect/train/weights/best.pt format=onnx`
+      - Implement basic detection
+    - Then, if we have time, rinse and repeat with the entire image dataset
+    - Then, if we have time, experiment with other models
 
 2. **Game Workflow**
     - Activate scoring mode via software interface
