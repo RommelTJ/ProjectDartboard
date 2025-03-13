@@ -12,6 +12,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
+# Create feed directory for storing camera images
+RUN mkdir -p /app/feed
+
 EXPOSE 5000
 
 CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "5000"]

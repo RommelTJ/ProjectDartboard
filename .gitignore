@@ -187,3 +187,6 @@ cython_debug/
 
 # React
 /app/frontend/node_modules
+
+# Camera feed
+/app/feed/
