@@ -60,26 +60,26 @@ const DartVisionPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col">
       <header className="bg-blue-600 text-white p-4 shadow-md">
-        <h1 className="text-2xl font-bold">DartVision</h1>
+        <h1 className="text-2xl font-bold">DartVision: Automated Dart Scoring System</h1>
       </header>
-      
+
       <main className="flex flex-grow flex-col md:flex-row p-4 gap-4">
         {/* Camera/Image View (2/3) */}
         <div className="w-full md:w-2/3">
-          <CameraView 
+          <CameraView
             onCaptureImage={handleCaptureImage}
-            onGetLatestImage={handleGetLatestImage} 
+            onGetLatestImage={handleGetLatestImage}
             onDeleteImages={handleDeleteImages}
             onAnalyzeImage={handleAnalyzeImage}
           />
         </div>
-        
+
         {/* AI Analysis (1/3) */}
         <div className="w-full md:w-1/3">
           <DartAnalysis detectionResponse={detectionResponse} />
         </div>
       </main>
-      
+
       <footer className="bg-gray-800 text-white p-4 text-center text-sm">
         <p>DartVision - Powered by AI</p>
       </footer>
