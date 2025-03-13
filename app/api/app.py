@@ -15,13 +15,22 @@ async def lifespan(app: FastAPI):
     # Startup: Load the ML model
     global ort_session
     try:
-        if os.path.exists(MODEL_PATH):
-            ort_session = ort.InferenceSession(MODEL_PATH)
-            print(f"Model loaded successfully from {MODEL_PATH}")
+        # Get absolute path for more reliable loading
+        abs_model_path = os.path.abspath(MODEL_PATH)
+        
+        if os.path.exists(abs_model_path):
+            # Log model loading
+            print(f"Loading YOLO11-OBB model from {abs_model_path}")
+            
+            # Load the model
+            ort_session = ort.InferenceSession(abs_model_path)
+            
+            # Log success
+            print("Model loaded successfully")
         else:
-            print(f"Model not found at {MODEL_PATH}")
+            print(f"ERROR: Model not found at {abs_model_path}")
     except Exception as e:
-        print(f"Error loading model: {e}")
+        print(f"ERROR: Failed to load model: {type(e).__name__}")
     
     yield
     

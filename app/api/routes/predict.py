@@ -18,7 +18,23 @@ async def predict(
 ):
     """
     Process an uploaded image and return dart detections
+    
+    Takes a JPEG image as input, runs the dart detection model,
+    and returns the detected darts with their positions and orientations.
     """
-    contents = await file.read()
-    result = PredictionService.detect_darts(ort_session, contents)
-    return result
+    try:
+        # Check if model is loaded
+        if ort_session is None:
+            return {"error": "Model not loaded"}
+        
+        # Read image
+        contents = await file.read()
+        
+        # Call prediction service
+        result = PredictionService.detect_darts(ort_session, contents)
+        
+        return result
+        
+    except Exception as e:
+        # Return error without exposing implementation details
+        return {"error": f"Failed to process image: {type(e).__name__}"}
