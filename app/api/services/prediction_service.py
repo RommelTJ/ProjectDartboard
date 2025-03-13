@@ -1,13 +1,33 @@
 import io
-from typing import Dict, Any, Tuple
+from typing import Dict, Tuple, List, Union, TypedDict
 
 import numpy as np
 import onnxruntime as ort
 from PIL import Image
 
+from models.detection import DetectionResponse, ModelInfo, DartDetection, BoundingBox
+
 # Constants
 IMG_SIZE = 2176  # Based on the model's expected input size
 CONFIDENCE_THRESHOLD = 0.09  # Adjusted threshold to filter out false positives while keeping true detections
+
+# Define types for internal use
+class DetectionError(TypedDict):
+    """Error response from detection service"""
+    error: str
+
+class DartDetectionData(TypedDict):
+    """Internal representation of a dart detection"""
+    x_center: float
+    y_center: float
+    width: float
+    height: float
+    angle: float
+    confidence: float
+    class_id: int
+    detection_index: int
+    corners: List[List[float]]
+    bbox: Dict[str, float]
 
 class PredictionService:
     @staticmethod
@@ -37,7 +57,7 @@ class PredictionService:
     def detect_darts(
         ort_session: ort.InferenceSession,
         image_bytes: bytes
-    ) -> Dict[str, Any]:
+    ) -> Union[DetectionResponse, DetectionError]:
         """
         Run dart detection inference on the provided image and process results.
 
@@ -61,7 +81,7 @@ class PredictionService:
             - darts_count: Number of darts detected
         """
         if ort_session is None:
-            return {"error": "Model not loaded"}
+            return DetectionError(error="Model not loaded")
 
         try:
             # Preprocess image
@@ -156,8 +176,8 @@ class PredictionService:
                             ry = px * sin_angle + py * cos_angle + y_center
                             rotated_points.append([float(rx), float(ry)])
 
-                        # Add detection with more useful information including corners
-                        detection_data = {
+                        # Create detection data with proper type
+                        detection_data: DartDetectionData = {
                             "x_center": float(x_center),
                             "y_center": float(y_center),
                             "width": float(width),
@@ -185,17 +205,48 @@ class PredictionService:
             # Sort detections by confidence (highest first)
             sorted_detections = sorted(filtered_detections, key=lambda x: x["confidence"], reverse=True)
 
-            # Return results with additional metadata
-            return {
-                "detections": sorted_detections,
-                "model_info": {
-                    "model": "YOLO11n-OBB",
-                    "image_size": IMG_SIZE,
-                    "original_size": original_size
-                },
-                "darts_count": len(sorted_detections)
-            }
+            # Convert internal types to Pydantic model types
+            bbox_objects = []
+            dart_detections = []
+
+            for det in sorted_detections:
+                # Convert dictionary bbox to BoundingBox object
+                bbox = BoundingBox(
+                    x1=det["bbox"]["x1"],
+                    y1=det["bbox"]["y1"],
+                    x2=det["bbox"]["x2"],
+                    y2=det["bbox"]["y2"]
+                )
+
+                # Create DartDetection object
+                dart = DartDetection(
+                    x_center=det["x_center"],
+                    y_center=det["y_center"],
+                    width=det["width"],
+                    height=det["height"],
+                    angle=det["angle"],
+                    confidence=det["confidence"],
+                    class_id=det["class_id"],
+                    detection_index=det["detection_index"],
+                    corners=det["corners"],
+                    bbox=bbox
+                )
+                dart_detections.append(dart)
+
+            # Create ModelInfo
+            model_info = ModelInfo(
+                model="YOLO11n-OBB",
+                image_size=IMG_SIZE,
+                original_size=list(original_size)
+            )
+
+            # Return DetectionResponse
+            return DetectionResponse(
+                detections=dart_detections,
+                model_info=model_info,
+                darts_count=len(dart_detections)
+            )
 
         except Exception as e:
             # Log the error type but not the full traceback for production
-            return {"error": f"Detection error: {type(e).__name__}"}
+            return DetectionError(error=f"Detection error: {type(e).__name__}")
