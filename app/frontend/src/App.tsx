@@ -1,9 +1,7 @@
+import DartVisionPage from './components/DartVisionPage';
+
 function App() {
-  return (
-    <div>
-      <h1>Hello World</h1>
-    </div>
-  );
+  return <DartVisionPage />;
 }
 
 export default App;

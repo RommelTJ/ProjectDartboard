@@ -9,7 +9,7 @@ from models.detection import DetectionResponse, ModelInfo, DartDetection, Boundi
 
 # Constants
 IMG_SIZE = 2176  # Based on the model's expected input size
-CONFIDENCE_THRESHOLD = 0.09  # Adjusted threshold to filter out false positives while keeping true detections
+CONFIDENCE_THRESHOLD = 0.4  # Adjusted threshold to filter out false positives while keeping true detections
 
 # Define types for internal use
 class DetectionError(TypedDict):
