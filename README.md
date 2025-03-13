@@ -162,12 +162,40 @@ based on game rules, and provides visual feedback through cabinet lighting.
 ### Model Training ✅
 - Completed manual annotation of 200 images
 - Trained YOLOv11n-OBB model with 99.1% mAP50 accuracy
-- Exported to ONNX format for deployment
+- Exported to both PyTorch (.pt) and ONNX (.onnx) formats for deployment
 
 ### Application Foundation ✅
 - Created dockerized React TypeScript frontend with Vite
 - Implemented FastAPI backend with API documentation
 - Set up Docker Compose for easy deployment
+
+### Implementation Challenges & Solutions
+
+#### The ONNX vs PyTorch Mystery 🕵️
+During our hackathon implementation, we encountered an unexpected challenge that demonstrates the importance of real-world testing:
+
+- **Initial Approach**: We initially integrated the ONNX model format, which is optimized for cross-platform deployment and efficiency
+- **Mysterious Behavior**: Despite our excellent training metrics (99.1% mAP50), the model struggled in production:
+  - Detected non-dart objects with low confidence values (max 40%)
+  - Generated bounding boxes with unrealistic dimensions
+  - Failed to consistently detect actual darts on the board
+  
+- **Debugging Process**:
+  - Added detailed logging to all components
+  - Implemented a togglable debug overlay to visualize detections
+  - Tested with different confidence thresholds
+  - Verified input/output dimensions and preprocessing steps
+  
+- **The Solution**: Switching from ONNX to the original PyTorch model format
+  - The PyTorch model immediately showed dramatically improved results
+  - Confidence scores for dart detections jumped from ~40% to >90%
+  - False positives disappeared entirely
+  
+- **Root Cause Analysis**: While we still don't know exactly why the ONNX conversion affected performance so dramatically, we suspect:
+  - Possible precision loss during conversion, especially for the specialized OBB (Oriented Bounding Box) detection format
+  - Subtle differences in how ONNX Runtime handles tensor operations compared to PyTorch
+  
+- **Key Takeaway**: Always test your models in real-world conditions with the exact inputs they'll receive in production. Even with excellent training metrics, deployment formats can significantly impact performance.
 
 ### Running the Application
 ```bash
@@ -183,10 +211,10 @@ Access points:
 ## Next Steps
 
 ### Immediate Tasks
-- Integrate the ONNX model into the FastAPI backend
-- Implement camera capture endpoints
-- Create dart detection and scoring logic
-- Develop the game tracking UI
+- Fine-tune dart board region detection
+- Implement scoring logic for Cricket and other games
+- Add user interface for game selection and score tracking
+- Create system for differentiating between sets of throws
 
 ### Future Enhancements
 - Expand training dataset to improve accuracy
