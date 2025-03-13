@@ -7,7 +7,9 @@ services:
       - "9721:5000"
     volumes:
       - ./api:/app
-      - ./feed:/app/feed  # Persistent storage for camera images
+      # Using a named volume that will be recreated each time with docker-compose down -v
+      # This ensures the feed directory is empty on container start
+      - dart_feed:/app/feed
     environment:
       - CAMERA_IP=${CAMERA_IP}  # Set from host environment or .env file
       - CAMERA_PASSWORD=${CAMERA_PASSWORD}  # Set from host environment or .env file
@@ -20,3 +22,8 @@ services:
     depends_on:
       - api
     restart: always
+
+volumes:
+  dart_feed:
+    # This ensures the volume is recreated each time
+    # Use docker-compose down -v to remove volumes when stopping

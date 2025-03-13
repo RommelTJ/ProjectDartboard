@@ -1,22 +1,21 @@
-import onnxruntime as ort
 from fastapi import APIRouter, UploadFile, File, Depends, HTTPException
 from starlette.status import HTTP_500_INTERNAL_SERVER_ERROR
+import os
 
 from services.prediction_service import PredictionService
 from models.detection import DetectionResponse, DetectionError
 
 router = APIRouter()
 
-# Use dependency injection to avoid circular import
-def get_ort_session():
-    # This function will be called by FastAPI to get the ort_session
-    from app import ort_session
-    return ort_session
+def get_model_path():
+    # This function will be called by FastAPI to get the model path
+    from app import MODEL_PATH
+    return os.path.abspath(MODEL_PATH)
 
 @router.post("/predict", response_model=DetectionResponse, responses={500: {"model": DetectionError}})
 async def predict(
     file: UploadFile = File(...),
-    ort_session: ort.InferenceSession = Depends(get_ort_session)
+    model_path: str = Depends(get_model_path)
 ) -> DetectionResponse:
     """
     Process an uploaded image and return dart detections
@@ -25,21 +24,14 @@ async def predict(
     and returns the detected darts with their positions and orientations.
     """
     try:
-        # Check if model is loaded
-        if ort_session is None:
-            raise HTTPException(
-                status_code=HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Model not loaded"
-            )
-        
         # Read image
         contents = await file.read()
         
         # Call prediction service
-        result = PredictionService.detect_darts(ort_session, contents)
+        result = PredictionService.detect_darts_pt(model_path, contents)
         
         # Check if there's an error in the result
-        if "error" in result:
+        if isinstance(result, dict) and "error" in result:
             raise HTTPException(
                 status_code=HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=result["error"]
@@ -54,5 +46,5 @@ async def predict(
         # Return error without exposing implementation details
         raise HTTPException(
             status_code=HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to process image: {type(e).__name__}"
+            detail=f"Failed to process image: {type(e).__name__} - {str(e)}"
         )

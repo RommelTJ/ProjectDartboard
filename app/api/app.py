@@ -2,41 +2,37 @@ import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
-import onnxruntime as ort
 
 from routes.predict import router as predict_router
 from routes.camera import router as camera_router
 
-# Load ONNX model
-MODEL_PATH = "model/best.onnx"  # Model included in source code
-ort_session = None
+# Use PyTorch model
+MODEL_PATH = "model/best.pt"  # Model included in source code
+yolo_model = None
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup: Load the ML model
-    global ort_session
+    global yolo_model
     try:
         # Get absolute path for more reliable loading
         abs_model_path = os.path.abspath(MODEL_PATH)
 
         if os.path.exists(abs_model_path):
-            # Log model loading
-            print(f"Loading YOLO11-OBB model from {abs_model_path}")
-
-            # Load the model
-            ort_session = ort.InferenceSession(abs_model_path)
-
-            # Log success
-            print("Model loaded successfully")
+                # We'll import and load the model on-demand in the prediction service
+            # This avoids dependency issues at startup
+            pass
         else:
-            print(f"ERROR: Model not found at {abs_model_path}")
-    except Exception as e:
-        print(f"ERROR: Failed to load model: {type(e).__name__}")
+            # Model not found
+            pass
+    except Exception:
+        # Failed to configure model
+        pass
 
     yield
 
     # Shutdown: Clean up resources
-    # No specific cleanup needed for ort_session
+    # No specific cleanup needed
 
 app = FastAPI(lifespan=lifespan)
 

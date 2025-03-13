@@ -2,6 +2,12 @@ FROM python:3.12-slim
 
 WORKDIR /app
 
+# Install system dependencies for OpenCV
+RUN apt-get update && apt-get install -y \
+    libgl1 \
+    libglib2.0-0 \
+    && rm -rf /var/lib/apt/lists/*
+
 # Environment variables for camera configuration
 # These will be set at runtime using docker-compose or docker run command
 ENV CAMERA_IP="placeholder_ip"
@@ -17,4 +23,5 @@ RUN mkdir -p /app/feed
 
 EXPOSE 5000
 
-CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "5000"]
+# Use our start script that cleans the feed directory before starting the app
+CMD ["/app/build/start.sh"]
