@@ -183,3 +183,5 @@ cython_debug/
 *.png
 *.gif
 
+# React
+/app/frontend/node_modules

@@ -2,7 +2,7 @@
 
 Pi Day 2025 Project
 
-Version: 0.3.0 - 12 Mar 2025
+Version: 0.4.0 - 13 Mar 2025
 
 ## Project Overview
 
@@ -22,10 +22,18 @@ based on game rules, and provides visual feedback through cabinet lighting.
 
 ## Software Stack
 
-- **Python 3**: Core programming language
+### Model & Computer Vision
+- **Python 3.12**: Core programming language
 - **OpenCV**: Computer vision library for dart detection
 - **ONNX Runtime**: High-performance inference engine for optimized models
 - **YOLOv11**: Vision detection model for object detection
+
+### Application Stack
+- **FastAPI**: High-performance Python web framework
+- **React**: Frontend UI library with TypeScript
+- **Vite**: Modern frontend build tool
+- **Docker**: Containerization for easy deployment
+- **Nginx**: Web server and reverse proxy
 
 ## Methodology
 
@@ -149,8 +157,38 @@ based on game rules, and provides visual feedback through cabinet lighting.
     - Low latency detection and scoring
     - LED feedback for successful detection
 
-## Future Enhancements
+## Current Development Status
 
+### Model Training ✅
+- Completed manual annotation of 200 images
+- Trained YOLOv11n-OBB model with 99.1% mAP50 accuracy
+- Exported to ONNX format for deployment
+
+### Application Foundation ✅
+- Created dockerized React TypeScript frontend with Vite
+- Implemented FastAPI backend with API documentation
+- Set up Docker Compose for easy deployment
+
+### Running the Application
+```bash
+cd app
+docker compose up --build
+```
+
+Access points:
+- Frontend: http://localhost:9720
+- API: http://localhost:9721
+- API Documentation: http://localhost:9721/docs
+
+## Next Steps
+
+### Immediate Tasks
+- Integrate the ONNX model into the FastAPI backend
+- Implement camera capture endpoints
+- Create dart detection and scoring logic
+- Develop the game tracking UI
+
+### Future Enhancements
 - Expand training dataset to improve accuracy
 - Add support for additional game modes
 - Implement player recognition

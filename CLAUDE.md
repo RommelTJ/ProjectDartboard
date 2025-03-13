@@ -121,9 +121,60 @@ After initial attempts with estimated positions failed to produce reliable model
     - Fast inference time on CPU deployment
     - Solid performance even with limited training data
 
-## Future Tasks
+## Application Development
+
+### App Structure
+The dockerized application is located in the `app/` directory and consists of:
+- Frontend: React TypeScript with Vite
+- Backend: FastAPI Python REST API
+- Deployment: Docker containers with Nginx
+
+### Running the Application
+```bash
+cd app
+docker compose up --build
+```
+
+Access the application at:
+- Frontend: http://localhost:9720
+- API: http://localhost:9721
+- API Documentation: http://localhost:9721/docs
+
+## Development Roadmap
+
+### Day 1: Frontend Capture & Single Dart Scoring ✓
+- Set up the project foundation
+- Created dockerized React/TypeScript frontend
+- Implemented FastAPI backend
+
+### Day 2: Model Integration & Single Dart Detection 🔜
+- Implement manual image capture button on frontend
+- Integrate ONNX model (from runs/obb/train12/weights/best.onnx) into FastAPI
+- Create endpoint to process images and detect darts
+- Build Cricket scoring logic for a single dart
+- Display detected dart positions and scores on frontend
+
+### Day 3: Multi-Dart Game Experience 🔜
+- Add automatic detection for 3-dart throws
+- Implement game state management
+- Create scoring history and visualization
+- Add manual override and bounce-out handling
+
+### Day 4: Presentation & Polish 🔜
+- Create compelling slides and demo
+- Add visual polish and UI improvements
+- Prepare live demonstration
+- Document the system and approach
+
+## Future Expansion (Post-Hackathon)
 - Complete annotation of 1000 images for improved model performance
-- Implement scoring logic for Cricket game
-- Develop web-based interface for real-time scoring
+- Add multiplayer features for remote games
+- Implement real-time scoring updates
 - Integrate with LED lighting feedback system
-- Package as containerized application for deployment
+- Consider commercial opportunities in dart communities
+
+## Technical Implementation Notes
+- The ONNX model performs detection with 99.1% mAP50 accuracy
+- Frontend will capture images from webcam initially, later from Reolink camera
+- FastAPI will handle both image processing and game state
+- Docker ensures consistent deployment environment on the mini PC
