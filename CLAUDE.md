@@ -121,9 +121,34 @@ After initial attempts with estimated positions failed to produce reliable model
     - Fast inference time on CPU deployment
     - Solid performance even with limited training data
 
-## Future Tasks
+## Application Development
+
+### App Structure
+The dockerized application is located in the `app/` directory and consists of:
+- Frontend: React TypeScript with Vite
+- Backend: FastAPI Python REST API
+- Deployment: Docker containers with Nginx
+
+### Running the Application
+```bash
+cd app
+docker compose up --build
+```
+
+Access the application at:
+- Frontend: http://localhost:9720
+- API: http://localhost:9721
+- API Documentation: http://localhost:9721/docs
+
+### Future App Development
+The app is a foundation that needs:
+1. Integration with the trained ONNX model (located at runs/obb/train12/weights/best.onnx)
+2. Image capture endpoints for the Reolink camera
+3. Dart detection and scoring logic
+4. Real-time user interface for game tracking
+
+## Remaining Tasks
 - Complete annotation of 1000 images for improved model performance
 - Implement scoring logic for Cricket game
 - Develop web-based interface for real-time scoring
 - Integrate with LED lighting feedback system
-- Package as containerized application for deployment
