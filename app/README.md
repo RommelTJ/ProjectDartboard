@@ -19,12 +19,22 @@ git clone <repository-url>
 cd ProjectDartboard/app
 ```
 
-2. Build and start the containers:
+2. Set up environment variables:
+```bash
+# Create a .env file from the template
+cp .env.example .env
+
+# Edit the .env file with your camera credentials
+# Replace the placeholder values with your actual camera IP and password
+vi .env
+```
+
+3. Build and start the containers:
 ```bash
 docker compose up --build
 ```
 
-3. Access the application:
+4. Access the application:
    - Frontend: http://localhost:9720
    - API: http://localhost:9721
 

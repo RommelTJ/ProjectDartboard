@@ -135,6 +135,8 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+# Ensure .env files in subdirectories are also ignored
+*/.env
 
 # Spyder project settings
 .spyderproject

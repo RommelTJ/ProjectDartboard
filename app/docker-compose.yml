@@ -7,6 +7,9 @@ services:
       - "9721:5000"
     volumes:
       - ./api:/app
+    environment:
+      - CAMERA_IP=${CAMERA_IP}  # Set from host environment or .env file
+      - CAMERA_PASSWORD=${CAMERA_PASSWORD}  # Set from host environment or .env file
     restart: always
 
   frontend:
