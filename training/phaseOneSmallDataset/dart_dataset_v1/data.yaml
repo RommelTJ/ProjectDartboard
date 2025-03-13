@@ -1,0 +1,5 @@
+path: C:\Users\me\Documents\GitHub\ProjectDartboard\training\phaseOneSmallDataset\dart_dataset_v1  # dataset root directory
+train: train/images  # train images relative to 'path'
+val: val/images  # val images relative to 'path'
+names:
+  0: dart

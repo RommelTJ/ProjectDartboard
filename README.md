@@ -2,7 +2,7 @@
 
 Pi Day 2025 Project
 
-Version: 0.2.0 - 12 Mar 2025
+Version: 0.3.0 - 12 Mar 2025
 
 ## Project Overview
 
@@ -81,28 +81,54 @@ based on game rules, and provides visual feedback through cabinet lighting.
           docker run -it -p 8080:8080 -v $(pwd)/labelStudioData:/label-studio/data heartexlabs/label-studio:latest
           ```
 
+    - **The Journey from 50 to 200 Images: A Story of Determination**:
+        - **The Initial Model**: We started with just 50 manually labeled images, spending hours carefully drawing boxes around each dart
+        - **Promising but Limited Results**: Our first model showed potential (89.5% mAP50, 69.3% mAP50-95) but missed darts in certain positions and lighting conditions
+        - **The Decision Point**: We faced a choice - try to use AI vision assistants to generate labels automatically or invest more time in manual labeling
+          - Having access to an NVIDIA RTX 3080 GPU was a game-changer - training that would take hours on a CPU took minutes
+          - This faster iteration cycle made manual labeling much more practical and worth the investment
+        - **The One-Day Labeling Push**: We committed to manual labeling, spending one intensive day meticulously annotating 150 additional images
+        - **The Payoff**: This investment yielded dramatic improvements:
+          - Detection accuracy (mAP50) jumped from 89.5% to 99.1%
+          - Position accuracy (mAP50-95) improved from 69.3% to 85.2%
+          - Precision increased to 98.7% with 97.6% recall
+        - **Real-World Impact**: Our system now reliably detects darts, though precise localization for cricket scoring will need further refinement
+        - **Future Potential**: With our full dataset of 1000+ images still available, we expect precision to increase even further as we continue expanding our training data
+
     - **Cross-Platform Training Pipeline**:
         - Train on Windows with RTX 3080 GPU (5.4x faster than MacBook Pro)
           ```bash
           # Windows command
-          yolo detect train model=yolo11n-obb.pt data=C:\Users\me\Documents\GitHub\ProjectDartboard\training\phaseOneSmallDataset\test_yolo_dataset\data.yaml epochs=50 imgsz=2160 batch=8
+          yolo detect train model=yolo11n-obb.pt data=C:\Users\me\Documents\GitHub\ProjectDartboard\training\phaseOneSmallDataset\dart_dataset_v1\data.yaml epochs=50 imgsz=2160 batch=8 val=False
           ```
         - Export to ONNX format on macOS (better compatibility)
           ```bash
           # macOS command
-          yolo export model=/Users/rommel/code/work/chatmeter/ProjectDartboard/runs/obb/train9/weights/best.pt format=onnx
+          yolo export model=/Users/rommel/code/work/chatmeter/ProjectDartboard/runs/obb/train12/weights/best.pt format=onnx
           ```
         - Deploy on Ubuntu mini PC using ONNX Runtime
 
     - **YOLOv11n-OBB Model Selection**:
         - OBB (Oriented Bounding Box) capability for detecting darts at various angles
         - Lightweight (2.7M parameters) for efficient inference on mini PC
-        - Fast inference time (17.6ms on CPU)
-        - Excellent performance (89.5% mAP50, 69.3% mAP50-95)
+        - Fast inference time (17.7ms inference, 51.6ms total processing)
+        - Outstanding performance metrics:
+          - mAP50: 99.1% (this means our system correctly identifies 99 out of 100 darts)
+          - mAP50-95: 85.2% (while good for detection, this suggests we may still have some localization challenges for precise scoring)
+          - Precision: 98.7% (when our system says "that's a dart," it's right 99% of the time)
+          - Recall: 97.6% (our system finds 98 out of 100 darts present on the board)
           ```bash
           # Validation command showing performance metrics
-          yolo val model=C:\Users\me\Documents\GitHub\ProjectDartboard\runs\obb\train9\weights\best.pt data=C:\Users\me\Documents\GitHub\ProjectDartboard\training\phaseOneSmallDataset\test_yolo_dataset\data.yaml imgsz=2160
+          yolo val model=C:\Users\me\Documents\GitHub\ProjectDartboard\runs\obb\train12\weights\best.pt data=C:\Users\me\Documents\GitHub\ProjectDartboard\training\phaseOneSmallDataset\dart_dataset_v1\data.yaml imgsz=2160
           ```
+    
+    - **Why Manual Labeling Was Worth Every Minute**:
+        - **The "AI Shortcut" Temptation**: We considered using AI vision tools like Gemini or Meta's Segment Anything to automate labeling
+        - **The Reality Check**: Testing revealed these tools couldn't consistently identify darts from our camera angle with the precision we needed
+        - **Quality Over Quantity**: 200 expertly labeled images proved far more valuable than thousands of auto-labeled ones
+        - **The Human Advantage**: Our manual labels captured subtle details like dart angles and partial occlusions that AI tools missed
+        - **A Lesson in Machine Learning**: This reinforced a fundamental ML principle - the quality of your training data ultimately determines the quality of your results
+        - **The Bottom Line**: That day of meticulous labeling was the best time investment we made in the entire project
 
 3. **Game Workflow**
     - Activate scoring mode via software interface

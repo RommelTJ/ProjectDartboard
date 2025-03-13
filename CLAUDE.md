@@ -84,11 +84,21 @@ After initial attempts with estimated positions failed to produce reliable model
     - Manually annotate 200 high-quality images with precise oriented bounding boxes
     - Export annotations in "YOLOv8 OBB" format
 
-2. **Cross-Platform Training Pipeline**
+2. **Dataset Preparation Workflow**
+    - After labeling with Label Studio, export annotations in "YOLOv8 OBB" format
+    - Place label files in `training/phaseOneSmallDataset/labels/`
+    - Use the updated dataset preparation script:
+      ```bash
+      # Create dataset with a specific name (e.g., dart_dataset_v1)
+      cd training/phaseOneSmallDataset
+      python prepare_dataset.py dart_dataset_v1
+      ```
+
+3. **Cross-Platform Training Pipeline**
     - **Training (Windows with RTX 3080)**
       ```bash
       # On Windows with RTX 3080
-      yolo detect train model=yolo11n-obb.pt data=C:\path\to\dataset.yaml epochs=50 imgsz=2160 batch=8
+      yolo detect train model=yolo11n-obb.pt data=C:\path\to\dart_dataset_v1\data.yaml epochs=50 imgsz=2160 batch=8
       ```
     - **Export (macOS)**
       ```bash
@@ -99,13 +109,13 @@ After initial attempts with estimated positions failed to produce reliable model
         - Deploy using ONNX Runtime on the Ubuntu mini PC
         - Package as Docker container for easy deployment
 
-3. **Performance Metrics**
+4. **Performance Metrics**
     - Current model (50 images): 89.5% mAP50, 69.3% mAP50-95
     - Training time: 29 minutes on RTX 3080 (vs 2.6 hours on MacBook Pro)
     - Inference speed: 17.6ms per image on CPU
     - Model size: 11.3MB (ONNX format)
 
-4. **Advantages of YOLOv11n-OBB**
+5. **Advantages of YOLOv11n-OBB**
     - OBB capability for detecting darts at various angles
     - Lightweight (2.7M parameters)
     - Fast inference time on CPU deployment
