@@ -1,15 +1,13 @@
 import io
-from typing import Dict, Tuple, List, Union, TypedDict
+from typing import Dict, List, Union, TypedDict
 
-import numpy as np
-import onnxruntime as ort
 from PIL import Image
 
 from models.detection import DetectionResponse, ModelInfo, DartDetection, BoundingBox
 
 # Constants
 IMG_SIZE = 2176  # Based on the model's expected input size
-CONFIDENCE_THRESHOLD = 0.4  # Adjusted threshold to filter out false positives while keeping true detections
+CONFIDENCE_THRESHOLD = 0.2  # Production-level confidence threshold
 
 # Define types for internal use
 class DetectionError(TypedDict):
@@ -31,183 +29,167 @@ class DartDetectionData(TypedDict):
 
 class PredictionService:
     @staticmethod
-    def preprocess_image(image_bytes: bytes, target_size: int = IMG_SIZE) -> Tuple[np.ndarray, Tuple[int, int]]:
+    def detect_darts_pt(model_path: str, image_bytes: bytes) -> Union[DetectionResponse, DetectionError]:
         """
-        Preprocess image bytes for model input
+        Run dart detection using the PyTorch model
         """
-        # Open image and resize
-        image = Image.open(io.BytesIO(image_bytes))
-
-        # Store original size for scaling back
-        original_size = image.size
-
-        # Resize image to target size
-        img = image.resize((target_size, target_size))
-
-        # Convert to normalized numpy array
-        img = np.array(img) / 255.0
-
-        # Convert to channel-first format and add batch dimension
-        img = img.transpose(2, 0, 1)
-        img = np.expand_dims(img, axis=0).astype(np.float32)
-
-        return img, original_size
-
-    @staticmethod
-    def detect_darts(
-        ort_session: ort.InferenceSession,
-        image_bytes: bytes
-    ) -> Union[DetectionResponse, DetectionError]:
-        """
-        Run dart detection inference on the provided image and process results.
-
-        This is designed for a specific camera and dartboard setup:
-        - Ceiling-mounted camera pointing down
-        - Dartboard is positioned in the upper-left quadrant of the image (not centered)
-        - Standard dartboard with numbers positioned clockwise: 20,1,18,4,13,6,10,15,2,17,3,19,7,16,8,11,14,9,12,5
-
-        Coordinate system:
-        - Image coordinates: (0,0) at top-left, with x increasing right and y increasing down
-        - The model returns OBB (Oriented Bounding Box) coordinates indicating dart positions
-
-        Args:
-            ort_session: ONNX runtime session with the loaded YOLO11-OBB model
-            image_bytes: Raw bytes of the input image
-
-        Returns:
-            Dictionary containing detection results, including:
-            - detections: List of detected darts with coordinates, orientation, and confidence
-            - model_info: Information about the model and image dimensions
-            - darts_count: Number of darts detected
-        """
-        if ort_session is None:
-            return DetectionError(error="Model not loaded")
-
         try:
+            # Import necessary libraries here to avoid dependency issues
+            from ultralytics import YOLO
+
+            # Load the PT model
+            model = YOLO(model_path)
+
             # Preprocess image
-            img, original_size = PredictionService.preprocess_image(image_bytes)
-            orig_w, orig_h = original_size
+            img = Image.open(io.BytesIO(image_bytes))
+            original_size = img.size
 
-            # Run inference
-            input_name = ort_session.get_inputs()[0].name
-            outputs = ort_session.run(None, {input_name: img})
+            # Run inference with the PT model
+            results = model.predict(
+                source=img,
+                conf=CONFIDENCE_THRESHOLD,
+                verbose=False,
+                augment=False,      # No augmentation for inference
+                imgsz=IMG_SIZE,     # Use the same image size as training
+                iou=0.1,            # Lower IoU threshold to detect more objects
+                max_det=100         # Increase max detections
+            )
 
-            # Process YOLO11-OBB model results
-            # From the logs, we see YOLO11-OBB has output shape (1, 6, 97104)
-            detections = outputs[0]
+            # If no results, try a more lenient approach
+            if not results or (len(results) > 0 and not hasattr(results[0], 'obb') and
+                              (not hasattr(results[0], 'boxes') or results[0].boxes is None)):
+                results = model.predict(
+                    source=img,
+                    conf=0.001,     # Much lower confidence threshold
+                    verbose=False,
+                    augment=True,   # Try with augmentation
+                    imgsz=IMG_SIZE
+                )
+
+            # Process the results
             filtered_detections = []
+            detection_index = 1
 
-            # Process the detections without debug logs
+            # Extract detection results
+            if len(results) > 0:
+                result = results[0]  # Get the first (and only) result
 
-            # From the logs, we can see that YOLO11-OBB is returning detections
-            # Each with reasonable x, y, width, height, angle values followed by confidence
-            # Process each detection row
-            for detection in detections[0]:
-                try:
-                    # Extract values based on what we're seeing in the logs
-                    # The sequence appears to be [x, y, width, height, angle, confidence, class_id, ...]
-                    if len(detection) < 6:
-                        continue
+                # Process results
 
-                    # Get confidence from position 5
-                    confidence = float(detection[5])
+                # For oriented bounding boxes, get the data
+                if hasattr(result, 'obb') and result.obb is not None:
+                    boxes = result.obb.data
+                    # Make sure we have boxes to process
+                    if boxes is not None and len(boxes) > 0:
+                        for i, box in enumerate(boxes):
+                            # Extract values from box tensor
+                            if len(box) >= 6:  # x, y, w, h, angle, conf
+                                x_center = float(box[0])
+                                y_center = float(box[1])
+                                width = float(box[2])
+                                height = float(box[3])
+                                angle = float(box[4])
+                                confidence = float(box[5])
+                                # Safely get class_id
+                                class_id = 0
+                                if hasattr(result, 'boxes') and result.boxes is not None and hasattr(result.boxes, 'cls'):
+                                    class_id = int(result.boxes.cls[i]) if i < len(result.boxes.cls) else 0
 
-                    # YOLO11-OBB model should output confidence between 0-1
-                    # But if we're getting values outside that range, normalize them
-                    if confidence > 1.0:
-                        confidence = confidence / 100.0  # Some YOLO outputs need scaling
 
-                    if confidence > CONFIDENCE_THRESHOLD:
-                        # Extract coordinates from the first 5 values
-                        x_center = float(detection[0])
-                        y_center = float(detection[1])
-                        width = float(detection[2])
-                        height = float(detection[3])
-                        angle = float(detection[4])
+                            # Calculate corners
+                            import math
+                            corners = []
+                            cos_angle = math.cos(math.radians(angle))
+                            sin_angle = math.sin(math.radians(angle))
 
-                        # Class ID is usually at index 6
-                        class_id = int(detection[6]) if len(detection) > 6 else 0
+                            points = [
+                                [-width/2, -height/2],  # top-left
+                                [width/2, -height/2],   # top-right
+                                [width/2, height/2],    # bottom-right
+                                [-width/2, height/2]    # bottom-left
+                            ]
 
-                        # According to YOLO OBB documentation, the model outputs normalized coordinates (0-1)
-                        # We need to denormalize them based on the original image dimensions
-                        
-                        # Denormalize center coordinates
-                        x_center = x_center * orig_w
-                        y_center = y_center * orig_h
-                        
-                        # Denormalize width and height
-                        width = width * orig_w
-                        height = height * orig_h
-                        
-                        # No special scaling needed - these are already properly normalized by the model
+                            for px, py in points:
+                                rx = px * cos_angle - py * sin_angle + x_center
+                                ry = px * sin_angle + py * cos_angle + y_center
+                                corners.append([float(rx), float(ry)])
 
-                        # Make sure the coordinates are within the image boundaries
-                        x_center = min(max(x_center, 0), orig_w)
-                        y_center = min(max(y_center, 0), orig_h)
-
-                        # Calculate corners of the bounding box for easier visualization
-                        half_width = width / 2
-                        half_height = height / 2
-
-                        # Calculate the OBB corners - useful for visualization and analysis
-                        # Using the algorithm for OBB with rotation
-                        import math
-
-                        # Calculate the four corners of the oriented bounding box
-                        angle_rad = math.radians(angle)
-                        cos_angle = math.cos(angle_rad)
-                        sin_angle = math.sin(angle_rad)
-
-                        # Points relative to center
-                        points = [
-                            [-width/2, -height/2],  # top-left
-                            [width/2, -height/2],   # top-right
-                            [width/2, height/2],    # bottom-right
-                            [-width/2, height/2]    # bottom-left
-                        ]
-
-                        # Apply rotation and translate to center
-                        rotated_points = []
-                        for px, py in points:
-                            rx = px * cos_angle - py * sin_angle + x_center
-                            ry = px * sin_angle + py * cos_angle + y_center
-                            rotated_points.append([float(rx), float(ry)])
-
-                        # Create detection data with proper type
-                        detection_data: DartDetectionData = {
-                            "x_center": float(x_center),
-                            "y_center": float(y_center),
-                            "width": float(width),
-                            "height": float(height),
-                            "angle": float(angle),
-                            "confidence": float(confidence),
-                            "class_id": class_id,
-                            "detection_index": len(filtered_detections) + 1,
-                            "corners": rotated_points,
-                            # Add estimated axis-aligned bounding box for simpler visualization
-                            "bbox": {
-                                "x1": float(x_center - half_width),
-                                "y1": float(y_center - half_height),
-                                "x2": float(x_center + half_width),
-                                "y2": float(y_center + half_height)
+                            # Add to filtered detections
+                            detection_data = {
+                                "x_center": float(x_center),
+                                "y_center": float(y_center),
+                                "width": float(width),
+                                "height": float(height),
+                                "angle": float(angle),
+                                "confidence": float(confidence),
+                                "class_id": class_id,
+                                "detection_index": detection_index,
+                                "corners": corners,
+                                "bbox": {
+                                    "x1": float(x_center - width/2),
+                                    "y1": float(y_center - height/2),
+                                    "x2": float(x_center + width/2),
+                                    "y2": float(y_center + height/2)
+                                }
                             }
-                        }
+                            filtered_detections.append(detection_data)
+                            detection_index += 1
+                elif hasattr(result, 'boxes') and result.boxes is not None and hasattr(result.boxes, 'data'):
+                    # For standard bounding boxes
+                    boxes = result.boxes.data
+                    # Make sure we have boxes to process
+                    if boxes is not None and len(boxes) > 0:
+                        for i, box in enumerate(boxes):
+                            if len(box) >= 6:  # xyxy, conf, cls
+                                x1, y1, x2, y2 = float(box[0]), float(box[1]), float(box[2]), float(box[3])
+                                confidence = float(box[4])
+                                class_id = int(box[5])
 
-                        # Sort detections by confidence (highest first)
-                        filtered_detections.append(detection_data)
-                except Exception as e:
-                    # Silently skip detections that can't be processed
-                    pass
+                                # Convert from xyxy to xywh format
+                                x_center = (x1 + x2) / 2
+                                y_center = (y1 + y2) / 2
+                                width = x2 - x1
+                                height = y2 - y1
+                                angle = 0  # no angle for standard boxes
+
+
+                                # Add to filtered detections with simpler corners (no rotation)
+                                corners = [
+                                    [x1, y1],  # top-left
+                                    [x2, y1],  # top-right
+                                    [x2, y2],  # bottom-right
+                                    [x1, y2]   # bottom-left
+                                ]
+
+                                detection_data = {
+                                    "x_center": float(x_center),
+                                    "y_center": float(y_center),
+                                    "width": float(width),
+                                    "height": float(height),
+                                    "angle": float(angle),
+                                    "confidence": float(confidence),
+                                    "class_id": class_id,
+                                    "detection_index": detection_index,
+                                    "corners": corners,
+                                    "bbox": {
+                                        "x1": float(x1),
+                                        "y1": float(y1),
+                                        "x2": float(x2),
+                                        "y2": float(y2)
+                                    }
+                                }
+                                filtered_detections.append(detection_data)
+                                detection_index += 1
+
 
             # Sort detections by confidence (highest first)
             sorted_detections = sorted(filtered_detections, key=lambda x: x["confidence"], reverse=True)
 
-            # Convert internal types to Pydantic model types
+            # Create the same response format
             bbox_objects = []
             dart_detections = []
 
             for det in sorted_detections:
-                # Convert dictionary bbox to BoundingBox object
                 bbox = BoundingBox(
                     x1=det["bbox"]["x1"],
                     y1=det["bbox"]["y1"],
@@ -215,7 +197,6 @@ class PredictionService:
                     y2=det["bbox"]["y2"]
                 )
 
-                # Create DartDetection object
                 dart = DartDetection(
                     x_center=det["x_center"],
                     y_center=det["y_center"],
@@ -230,14 +211,13 @@ class PredictionService:
                 )
                 dart_detections.append(dart)
 
-            # Create ModelInfo
             model_info = ModelInfo(
-                model="YOLO11n-OBB",
+                model="YOLO11n-OBB (PyTorch)",
                 image_size=IMG_SIZE,
                 original_size=list(original_size)
             )
 
-            # Return DetectionResponse
+            # Even if no darts are detected, return a valid response
             return DetectionResponse(
                 detections=dart_detections,
                 model_info=model_info,
@@ -245,5 +225,4 @@ class PredictionService:
             )
 
         except Exception as e:
-            # Log the error type but not the full traceback for production
-            return DetectionError(error=f"Detection error: {type(e).__name__}")
+            return DetectionError(error=f"PyTorch model detection error: {type(e).__name__} - {str(e)}")
