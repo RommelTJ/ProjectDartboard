@@ -23,4 +23,5 @@ RUN mkdir -p /app/feed
 
 EXPOSE 5000
 
-CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "5000"]
+# Use our start script that cleans the feed directory before starting the app
+CMD ["/app/build/start.sh"]
