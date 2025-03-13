@@ -1,60 +1,134 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import CameraView from './CameraView';
 import DartAnalysis from './DartAnalysis';
-
-// This would normally come from API calls
-interface DetectionResponse {
-  detections: any[];
-  model_info: {
-    model: string;
-    image_size: number;
-    original_size: number[];
-  };
-  darts_count: number;
-}
+import apiClient from '../api';
+import { DetectionResponse } from '../api/types';
 
 const DartVisionPage: React.FC = () => {
+  // State management
+  const [imageUrl, setImageUrl] = useState<string | undefined>(undefined);
+  const [imageFile, setImageFile] = useState<File | null>(null);
   const [detectionResponse, setDetectionResponse] = useState<DetectionResponse | undefined>(undefined);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
 
-  // These handlers would normally make API calls
-  const handleCaptureImage = () => {
-    console.log('Capture image clicked');
+  // Fetch the latest image on component mount
+  useEffect(() => {
+    fetchLatestImage();
+  }, []);
+
+  // Convert blob to URL for display
+  const createImageUrl = (blob: Blob): string => {
+    const url = URL.createObjectURL(blob);
+    return url;
   };
 
-  const handleGetLatestImage = () => {
-    console.log('Get latest image clicked');
+  // Clean up image URLs on unmount
+  useEffect(() => {
+    return () => {
+      if (imageUrl) {
+        URL.revokeObjectURL(imageUrl);
+      }
+    };
+  }, [imageUrl]);
+
+  // Handle API errors
+  const handleApiError = (error: any) => {
+    console.error('API Error:', error);
+    const message = error.data?.error || error.data?.message || 'An unexpected error occurred';
+    setErrorMessage(message);
+    setIsLoading(false);
   };
 
-  const handleDeleteImages = () => {
-    console.log('Delete images clicked');
+  // Fetch the latest image from the API and analyze it
+  const fetchLatestImage = async () => {
+    setIsLoading(true);
+    setErrorMessage(undefined);
+    setDetectionResponse(undefined);
+    
+    try {
+      const blob = await apiClient.getLatestImage();
+      
+      // Create a File object from the blob for later use with predictDarts
+      const file = new File([blob], 'latest-image.jpg', { type: 'image/jpeg' });
+      setImageFile(file);
+      
+      // Create URL for display
+      const url = createImageUrl(blob);
+      setImageUrl(url);
+      
+      // Automatically analyze the image
+      try {
+        const response = await apiClient.predictDarts(file);
+        setDetectionResponse(response);
+        setIsLoading(false);
+      } catch (analysisError) {
+        handleApiError(analysisError);
+      }
+    } catch (error: any) {
+      // 404 is expected when no images exist yet - don't treat as error
+      if (error.status === 404) {
+        setImageUrl(undefined);
+        setImageFile(null);
+        setIsLoading(false);
+      } else {
+        handleApiError(error);
+      }
+    }
   };
 
-  const handleAnalyzeImage = () => {
-    console.log('Analyze image clicked');
-    // Here we'd normally make an API call and set the response
-    // For now, we'll use dummy data
-    setDetectionResponse({
-      detections: [
-        {
-          x_center: 512.5,
-          y_center: 384.7,
-          width: 45.2,
-          height: 150.8,
-          angle: 15.3,
-          confidence: 0.97,
-          class_id: 0,
-          detection_index: 0,
-          corners: [[480, 350], [545, 350], [545, 420], [480, 420]],
-          bbox: { x1: 480, y1: 350, x2: 545, y2: 420 }
-        }
-      ],
-      model_info: {
-        model: "yolov11n-obb",
-        image_size: 1024,
-        original_size: [2160, 3840]
-      },
-      darts_count: 1
-    });
+  // Capture a new image
+  const handleCaptureImage = async () => {
+    setIsLoading(true);
+    setErrorMessage(undefined);
+    setDetectionResponse(undefined);
+
+    try {
+      await apiClient.captureImage();
+      await fetchLatestImage();
+    } catch (error) {
+      handleApiError(error);
+    }
+  };
+
+  // Delete all images
+  const handleDeleteImages = async () => {
+    setIsLoading(true);
+    setErrorMessage(undefined);
+    setDetectionResponse(undefined);
+
+    try {
+      await apiClient.deleteAllImages();
+      // Clear image and detection data
+      if (imageUrl) {
+        URL.revokeObjectURL(imageUrl);
+      }
+      setImageUrl(undefined);
+      setImageFile(null);
+      setIsLoading(false);
+    } catch (error) {
+      handleApiError(error);
+    }
+  };
+
+  // Analyze the current image
+  const handleAnalyzeImage = async () => {
+    if (!imageFile) {
+      setErrorMessage('No image available to analyze');
+      return;
+    }
+
+    setIsLoading(true);
+    setErrorMessage(undefined);
+
+    try {
+      const response = await apiClient.predictDarts(imageFile);
+      setDetectionResponse(response);
+      setIsLoading(false);
+    } catch (error) {
+      handleApiError(error);
+      setDetectionResponse(undefined);
+    }
   };
 
   return (
@@ -68,9 +142,10 @@ const DartVisionPage: React.FC = () => {
         <div className="w-full md:w-2/3">
           <CameraView
             onCaptureImage={handleCaptureImage}
-            onGetLatestImage={handleGetLatestImage}
             onDeleteImages={handleDeleteImages}
-            onAnalyzeImage={handleAnalyzeImage}
+            imageUrl={imageUrl}
+            isLoading={isLoading}
+            errorMessage={errorMessage}
           />
         </div>
 
@@ -81,7 +156,7 @@ const DartVisionPage: React.FC = () => {
       </main>
 
       <footer className="bg-gray-800 text-white p-4 text-center text-sm">
-        <p>DartVision - Powered by AI</p>
+        <p>DartVision - By Rommel Rico</p>
       </footer>
     </div>
   );
