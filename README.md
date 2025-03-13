@@ -90,7 +90,7 @@ based on game rules, and provides visual feedback through cabinet lighting.
         - Export to ONNX format on macOS (better compatibility)
           ```bash
           # macOS command
-          yolo export model=/Users/rommel/code/work/chatmeter/ProjectDartboard/runs/obb/train9/weights/best.pt format=onnx
+          yolo export model=/Users/rommel/code/work/chatmeter/ProjectDartboard/runs/obb/train12/weights/best.pt format=onnx
           ```
         - Deploy on Ubuntu mini PC using ONNX Runtime
 
