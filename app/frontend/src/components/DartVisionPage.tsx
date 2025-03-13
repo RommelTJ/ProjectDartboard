@@ -146,6 +146,7 @@ const DartVisionPage: React.FC = () => {
             imageUrl={imageUrl}
             isLoading={isLoading}
             errorMessage={errorMessage}
+            detectionResponse={detectionResponse}
           />
         </div>
 

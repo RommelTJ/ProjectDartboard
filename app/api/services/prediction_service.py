@@ -112,9 +112,10 @@ class PredictionService:
                     # Get confidence from position 5
                     confidence = float(detection[5])
 
-                    # YOLO11-OBB outputs confidence values that need scaling
+                    # YOLO11-OBB model should output confidence between 0-1
+                    # But if we're getting values outside that range, normalize them
                     if confidence > 1.0:
-                        confidence = confidence / 100.0  # Scale down based on observed values
+                        confidence = confidence / 100.0  # Some YOLO outputs need scaling
 
                     if confidence > CONFIDENCE_THRESHOLD:
                         # Extract coordinates from the first 5 values
@@ -127,22 +128,18 @@ class PredictionService:
                         # Class ID is usually at index 6
                         class_id = int(detection[6]) if len(detection) > 6 else 0
 
-                        # Scale coordinates to match original image size
-                        # YOLO11 typically outputs coordinates relative to the input size
-                        scale_x, scale_y = orig_w / IMG_SIZE, orig_h / IMG_SIZE
-
-                        # For YOLO11-OBB models, outputs need special scaling
-                        # From the documentation and logs, we can see that the coordinates need significant scaling
-
-                        # Calculate scaling factors based on image dimensions
-                        # The model is trained on 2176x2176 images, but detection coordinates are very small
-                        scale_factor = min(orig_w, orig_h) / 20.0  # Scale factor based on image dimensions
-
-                        # Scale the coordinates to match the original image dimensions
-                        x_center = x_center * scale_factor
-                        y_center = y_center * scale_factor
-                        width = width * scale_factor
-                        height = height * scale_factor
+                        # According to YOLO OBB documentation, the model outputs normalized coordinates (0-1)
+                        # We need to denormalize them based on the original image dimensions
+                        
+                        # Denormalize center coordinates
+                        x_center = x_center * orig_w
+                        y_center = y_center * orig_h
+                        
+                        # Denormalize width and height
+                        width = width * orig_w
+                        height = height * orig_h
+                        
+                        # No special scaling needed - these are already properly normalized by the model
 
                         # Make sure the coordinates are within the image boundaries
                         x_center = min(max(x_center, 0), orig_w)
