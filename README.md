@@ -85,7 +85,7 @@ based on game rules, and provides visual feedback through cabinet lighting.
         - Train on Windows with RTX 3080 GPU (5.4x faster than MacBook Pro)
           ```bash
           # Windows command
-          yolo detect train model=yolo11n-obb.pt data=C:\Users\me\Documents\GitHub\ProjectDartboard\training\phaseOneSmallDataset\test_yolo_dataset\data.yaml epochs=50 imgsz=2160 batch=8
+          yolo detect train model=yolo11n-obb.pt data=C:\Users\me\Documents\GitHub\ProjectDartboard\training\phaseOneSmallDataset\dart_dataset_v1\data.yaml epochs=50 imgsz=2160 batch=8 val=False
           ```
         - Export to ONNX format on macOS (better compatibility)
           ```bash
@@ -101,7 +101,7 @@ based on game rules, and provides visual feedback through cabinet lighting.
         - Excellent performance (89.5% mAP50, 69.3% mAP50-95)
           ```bash
           # Validation command showing performance metrics
-          yolo val model=C:\Users\me\Documents\GitHub\ProjectDartboard\runs\obb\train9\weights\best.pt data=C:\Users\me\Documents\GitHub\ProjectDartboard\training\phaseOneSmallDataset\test_yolo_dataset\data.yaml imgsz=2160
+          yolo val model=C:\Users\me\Documents\GitHub\ProjectDartboard\runs\obb\train12\weights\best.pt data=C:\Users\me\Documents\GitHub\ProjectDartboard\training\phaseOneSmallDataset\dart_dataset_v1\data.yaml imgsz=2160
           ```
 
 3. **Game Workflow**
