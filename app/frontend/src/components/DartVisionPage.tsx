@@ -1,6 +1,62 @@
-import React from 'react';
+import React, { useState } from 'react';
+import CameraView from './CameraView';
+import DartAnalysis from './DartAnalysis';
+
+// This would normally come from API calls
+interface DetectionResponse {
+  detections: any[];
+  model_info: {
+    model: string;
+    image_size: number;
+    original_size: number[];
+  };
+  darts_count: number;
+}
 
 const DartVisionPage: React.FC = () => {
+  const [detectionResponse, setDetectionResponse] = useState<DetectionResponse | undefined>(undefined);
+
+  // These handlers would normally make API calls
+  const handleCaptureImage = () => {
+    console.log('Capture image clicked');
+  };
+
+  const handleGetLatestImage = () => {
+    console.log('Get latest image clicked');
+  };
+
+  const handleDeleteImages = () => {
+    console.log('Delete images clicked');
+  };
+
+  const handleAnalyzeImage = () => {
+    console.log('Analyze image clicked');
+    // Here we'd normally make an API call and set the response
+    // For now, we'll use dummy data
+    setDetectionResponse({
+      detections: [
+        {
+          x_center: 512.5,
+          y_center: 384.7,
+          width: 45.2,
+          height: 150.8,
+          angle: 15.3,
+          confidence: 0.97,
+          class_id: 0,
+          detection_index: 0,
+          corners: [[480, 350], [545, 350], [545, 420], [480, 420]],
+          bbox: { x1: 480, y1: 350, x2: 545, y2: 420 }
+        }
+      ],
+      model_info: {
+        model: "yolov11n-obb",
+        image_size: 1024,
+        original_size: [2160, 3840]
+      },
+      darts_count: 1
+    });
+  };
+
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col">
       <header className="bg-blue-600 text-white p-4 shadow-md">
@@ -9,28 +65,19 @@ const DartVisionPage: React.FC = () => {
       
       <main className="flex flex-grow flex-col md:flex-row p-4 gap-4">
         {/* Camera/Image View (2/3) */}
-        <section className="w-full md:w-2/3 bg-white rounded-lg shadow-md p-4 flex flex-col">
-          <h2 className="text-xl font-semibold mb-4">Camera View</h2>
-          <div className="flex-grow bg-gray-200 rounded-lg flex items-center justify-center">
-            <p className="text-gray-600">Camera feed will appear here</p>
-          </div>
-          <div className="mt-4 flex justify-center gap-4">
-            <button className="bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-lg">
-              Capture Image
-            </button>
-            <button className="bg-gray-500 hover:bg-gray-600 text-white py-2 px-4 rounded-lg">
-              Get Latest Image
-            </button>
-          </div>
-        </section>
+        <div className="w-full md:w-2/3">
+          <CameraView 
+            onCaptureImage={handleCaptureImage}
+            onGetLatestImage={handleGetLatestImage} 
+            onDeleteImages={handleDeleteImages}
+            onAnalyzeImage={handleAnalyzeImage}
+          />
+        </div>
         
         {/* AI Analysis (1/3) */}
-        <section className="w-full md:w-1/3 bg-white rounded-lg shadow-md p-4 flex flex-col">
-          <h2 className="text-xl font-semibold mb-4">Dart Analysis</h2>
-          <div className="flex-grow bg-gray-200 rounded-lg p-4 overflow-y-auto">
-            <p className="text-gray-600">Dart detection results will appear here</p>
-          </div>
-        </section>
+        <div className="w-full md:w-1/3">
+          <DartAnalysis detectionResponse={detectionResponse} />
+        </div>
       </main>
       
       <footer className="bg-gray-800 text-white p-4 text-center text-sm">
