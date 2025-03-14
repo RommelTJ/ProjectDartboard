@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { DetectionResponse } from '../api';
-import { estimateDartTipPosition } from '../utils/dartboardScoring';
+import { estimateDartTipPosition, MANUAL_ADJUSTMENTS } from '../utils/dartboardScoring';
 
 interface DebugOverlayProps {
   detectionResponse: DetectionResponse;
@@ -91,15 +91,19 @@ const DebugOverlay: React.FC<DebugOverlayProps> = ({ detectionResponse, imageId 
           
           // Radius values in pixels - keep in sync with dartboardScoring.ts DARTBOARD_CONFIG
           const dartboardRadius = 298; // Should match DARTBOARD_CONFIG.radius
-          const innerBullRadius = dartboardRadius * 0.035;
-          const outerBullRadius = dartboardRadius * 0.0764; 
-          const tripleInnerRadius = dartboardRadius * 0.59;
-          const tripleOuterRadius = dartboardRadius * 0.65;
-          const doubleInnerRadius = dartboardRadius * 0.93;
-          const doubleOuterRadius = dartboardRadius * 1.0;
+          
+          // Apply the ring scale factor to all ring measurements
+          const scaleFactor = MANUAL_ADJUSTMENTS.ringScaleFactor;
+          
+          const innerBullRadius = dartboardRadius * 0.035 * scaleFactor;
+          const outerBullRadius = dartboardRadius * 0.0764 * scaleFactor; 
+          const tripleInnerRadius = dartboardRadius * 0.59 * scaleFactor;
+          const tripleOuterRadius = dartboardRadius * 0.65 * scaleFactor;
+          const doubleInnerRadius = dartboardRadius * 0.93 * scaleFactor;
+          const doubleOuterRadius = dartboardRadius * 1.0 * scaleFactor;
           
           // Scale for display
-          const scaledDartboardRadius = dartboardRadius * scaleX;
+          const scaledDartboardRadius = dartboardRadius * scaleX * scaleFactor;
           const scaledInnerBullRadius = innerBullRadius * scaleX;
           const scaledOuterBullRadius = outerBullRadius * scaleX;
           const scaledTripleInnerRadius = tripleInnerRadius * scaleX;
@@ -199,6 +203,33 @@ const DebugOverlay: React.FC<DebugOverlayProps> = ({ detectionResponse, imageId 
                 Bull's Eye
               </text>
               
+              {/* Display current adjustments */}
+              <text 
+                x={centerX}
+                y={centerY - 35}
+                fill="yellow"
+                fontSize="9"
+                fontWeight="bold"
+                textAnchor="middle"
+                stroke="black"
+                strokeWidth="0.3"
+              >
+                Rotate: {MANUAL_ADJUSTMENTS.rotationAdjustment}° | Scale: {MANUAL_ADJUSTMENTS.ringScaleFactor.toFixed(2)}x
+              </text>
+              
+              <text 
+                x={centerX}
+                y={centerY - 50}
+                fill="yellow"
+                fontSize="9"
+                fontWeight="bold"
+                textAnchor="middle"
+                stroke="black"
+                strokeWidth="0.3"
+              >
+                Offset X: {MANUAL_ADJUSTMENTS.detectionOffsetX.toFixed(1)} | Y: {MANUAL_ADJUSTMENTS.detectionOffsetY.toFixed(1)}
+              </text>
+              
               {/* Triple ring label */}
               <text 
                 x={centerX}
@@ -221,20 +252,25 @@ const DebugOverlay: React.FC<DebugOverlayProps> = ({ detectionResponse, imageId 
                 Double Ring
               </text>
               
-              {/* Draw segment lines and labels for cricket segments */}
+              {/* Draw segment lines and labels for cricket segments with adjustment */}
               {[...Array(20)].map((_, i) => {
-                const angle = (i * 18) * Math.PI / 180;
-                const x2 = centerX + Math.sin(angle) * scaledDartboardRadius;
-                const y2 = centerY - Math.cos(angle) * scaledDartboardRadius;
+                // Apply rotation adjustment
+                const rotationOffset = MANUAL_ADJUSTMENTS.rotationAdjustment * (Math.PI / 180);
+                const angle = (i * 18) * Math.PI / 180 + rotationOffset;
+                
+                // Apply scale factor to radius
+                const adjustedRadius = scaledDartboardRadius * MANUAL_ADJUSTMENTS.ringScaleFactor;
+                const x2 = centerX + Math.sin(angle) * adjustedRadius;
+                const y2 = centerY - Math.cos(angle) * adjustedRadius;
                 
                 // Only draw the cricket segments (15-20)
                 const segmentNumber = [20, 1, 18, 4, 13, 6, 10, 15, 2, 17, 3, 19, 7, 16, 8, 11, 14, 9, 12, 5][i];
                 const isCricketSegment = segmentNumber >= 15 && segmentNumber <= 20;
                 const color = isCricketSegment ? "rgba(255, 255, 0, 0.7)" : "rgba(200, 200, 200, 0.25)";
                 
-                // Position for the label
-                const labelAngle = ((i + 0.5) * 18) * Math.PI / 180;
-                const labelDistance = scaledDartboardRadius * 0.7; // Place label at 70% distance
+                // Position for the label - also adjust for rotation and scale
+                const labelAngle = ((i + 0.5) * 18) * Math.PI / 180 + rotationOffset;
+                const labelDistance = adjustedRadius * 0.7; // Place label at 70% distance
                 const labelX = centerX + Math.sin(labelAngle) * labelDistance;
                 const labelY = centerY - Math.cos(labelAngle) * labelDistance;
                 
@@ -312,11 +348,9 @@ const DebugOverlay: React.FC<DebugOverlayProps> = ({ detectionResponse, imageId 
           );
           
           // Also calculate uncorrected position for comparison in debug view
-          const DETECTION_OFFSET_X = 13.66;
-          const DETECTION_OFFSET_Y = 125.0;
           const rawTipPosition = {
-            x: tipPosition.x + DETECTION_OFFSET_X,
-            y: tipPosition.y + DETECTION_OFFSET_Y
+            x: tipPosition.x + MANUAL_ADJUSTMENTS.detectionOffsetX,
+            y: tipPosition.y + MANUAL_ADJUSTMENTS.detectionOffsetY
           };
           
           // Scale tip positions for display
