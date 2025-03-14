@@ -48,12 +48,12 @@ export const MANUAL_ADJUSTMENTS = {
   rotationAdjustment: -5,  // Adjust this to rotate the entire dartboard
 
   // Scale factor for rings (values > 1 make rings bigger, < 1 make them smaller)
-  ringScaleFactor: 1.16,   // Adjust this to make the rings bigger or smaller
+  ringScaleFactor: 1.0,   // Adjust this to make the rings bigger or smaller
 
   // Detection offset corrections for dart tip positioning
   // These account for the difference between where darts are detected vs where they actually strike
-  detectionOffsetX: 13.66, // Difference from detected X to actual X (left/right adjustment)
-  detectionOffsetY: 125.0, // Difference from detected Y to actual Y (up/down adjustment)
+  detectionOffsetX: 24.5, // Difference from detected X to actual X (left/right adjustment) // 0 gave me 6; 30 gave me bull. 40 gave me bull. 50 gave me 16. 46 gave me 8. 45 gave me bull. 4 gave bull. 3 gave me 6. Range is 4 to 45
+  detectionOffsetY: 115.0, // Difference from detected Y to actual Y (up/down adjustment) // 105 is too low. Gave me 2.; 110 gave me bull. 150 is too high, gave me 1. 140 gave me bull. Range is 110 to 140
 };
 // =========================================================================
 
