@@ -2,7 +2,7 @@
 
 Pi Day 2025 Project
 
-Version: 1.0.0 - 14 Mar 2025
+Version: 1.0.1 - 14 Mar 2025
 
 ## Project Overview
 
@@ -258,9 +258,9 @@ Access points:
 
 ### Immediate Tasks
 - Fix minor bugs in automatic scoring mode
-- Add support for different dart games (301, 501)
-- Create proper game management with player selection
 - Add support for manual score override when detection is imperfect
+- Add support for bounce-outs
+- Complete labeling of full dataset and retrain model for improved accuracy
 
 ### Future Enhancements
 - **Expand Training Dataset**:
