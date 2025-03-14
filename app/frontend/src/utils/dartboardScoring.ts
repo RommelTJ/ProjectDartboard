@@ -52,8 +52,8 @@ export const MANUAL_ADJUSTMENTS = {
 
   // Detection offset corrections for dart tip positioning
   // These account for the difference between where darts are detected vs where they actually strike
-  detectionOffsetX: 13, // Difference from detected X to actual X (left/right adjustment)
-  detectionOffsetY: 125, // Difference from detected Y to actual Y (up/down adjustment)
+  detectionOffsetX: 13.66, // Difference from detected X to actual X (left/right adjustment)
+  detectionOffsetY: 125.0, // Difference from detected Y to actual Y (up/down adjustment)
 };
 // =========================================================================
 

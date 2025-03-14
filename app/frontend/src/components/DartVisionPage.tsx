@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import CameraView from './CameraView';
 import DartAnalysis from './DartAnalysis';
+import Scoreboard from './Scoreboard';
 import apiClient from '../api';
 import { DetectionResponse } from '../api/types';
 import { useDebugOverlay } from '../hooks/useDebugOverlay';
+import { getDartScore } from '../utils/dartboardScoring';
 
 const DartVisionPage: React.FC = () => {
   // State management
@@ -13,11 +15,27 @@ const DartVisionPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
   const { showDebugOverlay, setShowDebugOverlay } = useDebugOverlay(false);
+  
+  // State for dart scores (derived from detectionResponse)
+  const [dartScores, setDartScores] = useState<Array<ReturnType<typeof getDartScore> & { dartIndex: number }>>([]);
 
   // Fetch the latest image on component mount
   useEffect(() => {
     fetchLatestImage();
   }, []);
+  
+  // Calculate dart scores when detection response changes
+  useEffect(() => {
+    if (detectionResponse?.detections) {
+      const scores = detectionResponse.detections.map((dart, index) => ({
+        ...getDartScore(dart.x_center, dart.y_center, dart.width, dart.height, dart.angle),
+        dartIndex: index
+      }));
+      setDartScores(scores);
+    } else {
+      setDartScores([]);
+    }
+  }, [detectionResponse]);
 
   // Convert blob to URL for display
   const createImageUrl = (blob: Blob): string => {
@@ -154,8 +172,12 @@ const DartVisionPage: React.FC = () => {
           />
         </div>
 
-        {/* AI Analysis (1/3) */}
+        {/* AI Analysis and Scoreboard (1/3) */}
         <div className="w-full md:w-1/3">
+          <Scoreboard 
+            detectionResponse={detectionResponse}
+            dartScores={dartScores}
+          />
           <DartAnalysis 
             detectionResponse={detectionResponse} 
             showDebugOverlay={showDebugOverlay}
