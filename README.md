@@ -20,6 +20,12 @@ based on game rules, and provides visual feedback through cabinet lighting.
 - **Networking**: PoE injector to power camera
 - **Cabling**: Cat6 Ethernet cable, cable raceways
 
+## System Requirements
+
+- **CPU**: Single-core Intel processor (1.5GHz+)
+- **RAM**: 1GB (container uses ~358MB during inference)
+- **Storage**: 2GB available space
+
 ## Software Stack
 
 ### Model & Computer Vision
@@ -93,13 +99,13 @@ based on game rules, and provides visual feedback through cabinet lighting.
         - **The Initial Model**: We started with just 50 manually labeled images, spending hours carefully drawing boxes around each dart
         - **Promising but Limited Results**: Our first model showed potential (89.5% mAP50, 69.3% mAP50-95) but missed darts in certain positions and lighting conditions
         - **The Decision Point**: We faced a choice - try to use AI vision assistants to generate labels automatically or invest more time in manual labeling
-          - Having access to an NVIDIA RTX 3080 GPU was a game-changer - training that would take hours on a CPU took minutes
-          - This faster iteration cycle made manual labeling much more practical and worth the investment
+            - Having access to an NVIDIA RTX 3080 GPU was a game-changer - training that would take hours on a CPU took minutes
+            - This faster iteration cycle made manual labeling much more practical and worth the investment
         - **The One-Day Labeling Push**: We committed to manual labeling, spending one intensive day meticulously annotating 150 additional images
         - **The Payoff**: This investment yielded dramatic improvements:
-          - Detection accuracy (mAP50) jumped from 89.5% to 99.1%
-          - Position accuracy (mAP50-95) improved from 69.3% to 85.2%
-          - Precision increased to 98.7% with 97.6% recall
+            - Detection accuracy (mAP50) jumped from 89.5% to 99.1%
+            - Position accuracy (mAP50-95) improved from 69.3% to 85.2%
+            - Precision increased to 98.7% with 97.6% recall
         - **Real-World Impact**: Our system now reliably detects darts, though precise localization for cricket scoring will need further refinement
         - **Future Potential**: With our full dataset of 1000+ images still available, we expect precision to increase even further as we continue expanding our training data
 
@@ -121,21 +127,22 @@ based on game rules, and provides visual feedback through cabinet lighting.
         - Lightweight (2.7M parameters) for efficient inference on mini PC
         - Fast inference time (17.7ms inference, 51.6ms total processing)
         - Outstanding performance metrics:
-          - mAP50: 99.1% (this means our system correctly identifies 99 out of 100 darts)
-          - mAP50-95: 85.2% (while good for detection, this suggests we may still have some localization challenges for precise scoring)
-          - Precision: 98.7% (when our system says "that's a dart," it's right 99% of the time)
-          - Recall: 97.6% (our system finds 98 out of 100 darts present on the board)
+            - mAP50: 99.1% (this means our system correctly identifies 99 out of 100 darts)
+            - mAP50-95: 85.2% (while good for detection, this suggests we may still have some localization challenges for precise scoring)
+            - Precision: 98.7% (when our system says "that's a dart," it's right 99% of the time)
+            - Recall: 97.6% (our system finds 98 out of 100 darts present on the board)
           ```bash
           # Validation command showing performance metrics
           yolo val model=C:\Users\me\Documents\GitHub\ProjectDartboard\runs\obb\train12\weights\best.pt data=C:\Users\me\Documents\GitHub\ProjectDartboard\training\phaseOneSmallDataset\dart_dataset_v1\data.yaml imgsz=2160
           ```
-    
+
     - **Why Manual Labeling Was Worth Every Minute**:
         - **The "AI Shortcut" Temptation**: We considered using AI vision tools like Gemini or Meta's Segment Anything to automate labeling
         - **The Reality Check**: Testing revealed these tools couldn't consistently identify darts from our camera angle with the precision we needed
         - **Quality Over Quantity**: 200 expertly labeled images proved far more valuable than thousands of auto-labeled ones
         - **The Human Advantage**: Our manual labels captured subtle details like dart angles and partial occlusions that AI tools missed
         - **A Lesson in Machine Learning**: This reinforced a fundamental ML principle - the quality of your training data ultimately determines the quality of your results
+        - **The Resource Efficiency Revelation**: Our specialized, purpose-built model runs on incredibly modest hardware (using only ~358MB RAM during inference), proving that traditional ML approaches can run on practically any computer - even a "potato PC" - while large multimodal models like Gemini require orders of magnitude more resources
         - **The Bottom Line**: That day of meticulous labeling was the best time investment we made in the entire project
 
 3. **Game Workflow**
@@ -182,53 +189,58 @@ based on game rules, and provides visual feedback through cabinet lighting.
 One of the most challenging aspects of this project was accurately mapping dart positions to their correct scores:
 
 - **The Core Problem**: While our model excels at detecting darts (99.1% mAP50), precisely determining which segment and ring a dart has landed in proved exceptionally difficult:
-  - The camera views the dartboard at an angle, creating perspective distortion
-  - Circular dartboard appears as an ellipse in the camera view
-  - Segment boundaries aren't straight lines in the distorted view
-  - Different lighting conditions can affect dart tip visibility
+    - The camera views the dartboard at an angle, creating perspective distortion
+    - Circular dartboard appears as an ellipse in the camera view
+    - Segment boundaries aren't straight lines in the distorted view
+    - Different lighting conditions can affect dart tip visibility
 
 - **Attempted Solutions**:
-  - **Calibration Points**: Initially implemented a system to mark key points (center, bulls, rings) and calculate distances/ratios
-  - **Homography Transformation**: Tried to use a mathematical transformation to correct for perspective distortion
-  - **Computer Vision Segmentation**: Attempted to detect segment boundaries directly from the image
-  - **Neural Network Approach**: Considered training a second model just for scoring
-  
+    - **Calibration Points**: Initially implemented a system to mark key points (center, bulls, rings) and calculate distances/ratios
+    - **Homography Transformation**: Tried to use a mathematical transformation to correct for perspective distortion
+    - **Computer Vision Segmentation**: Attempted to detect segment boundaries directly from the image
+    - **Neural Network Approach**: Considered training a second model just for scoring
+
 - **Current Solution**: A pragmatic manual adjustment system
-  - Implemented adjustable parameters for rotation, scaling, and positioning
-  - Added a debug overlay to visualize scoring boundaries and dart positions
-  - Created simple manual offset controls to fine-tune detection
-  - This approach allows quick visual adjustments without complex mathematics
-  
+    - Implemented adjustable parameters for rotation, scaling, and positioning
+    - Added a debug overlay to visualize scoring boundaries and dart positions
+    - Created simple manual offset controls to fine-tune detection
+    - This approach allows quick visual adjustments without complex mathematics
+
 - **Lessons Learned**:
-  - Sometimes simpler approaches are more robust than mathematically elegant ones
-  - Visual debugging tools are essential for fine-tuning spatial algorithms
-  - User-adjustable parameters provide flexibility for different mounting positions
-  - A well-designed overlay can make complex scoring intuitive to adjust
+    - Sometimes simpler approaches are more robust than mathematically elegant ones
+    - Visual debugging tools are essential for fine-tuning spatial algorithms
+    - User-adjustable parameters provide flexibility for different mounting positions
+    - A well-designed overlay can make complex scoring intuitive to adjust
 
 #### The ONNX vs PyTorch Mystery 🕵️
 During our hackathon implementation, we encountered an unexpected challenge that demonstrates the importance of real-world testing:
 
 - **Initial Approach**: We initially integrated the ONNX model format, which is optimized for cross-platform deployment and efficiency
 - **Mysterious Behavior**: Despite our excellent training metrics (99.1% mAP50), the model struggled in production:
-  - Detected non-dart objects with low confidence values (max 40%)
-  - Generated bounding boxes with unrealistic dimensions
-  - Failed to consistently detect actual darts on the board
-  
+    - Detected non-dart objects with low confidence values (max 40%)
+    - Generated bounding boxes with unrealistic dimensions
+    - Failed to consistently detect actual darts on the board
+
 - **Debugging Process**:
-  - Added detailed logging to all components
-  - Implemented a togglable debug overlay to visualize detections
-  - Tested with different confidence thresholds
-  - Verified input/output dimensions and preprocessing steps
-  
+    - Added detailed logging to all components
+    - Implemented a togglable debug overlay to visualize detections
+    - Tested with different confidence thresholds
+    - Verified input/output dimensions and preprocessing steps
+
 - **The Solution**: Switching from ONNX to the original PyTorch model format
-  - The PyTorch model immediately showed dramatically improved results
-  - Confidence scores for dart detections jumped from ~40% to >90%
-  - False positives disappeared entirely
-  
+    - The PyTorch model immediately showed dramatically improved results
+    - Confidence scores for dart detections jumped from ~40% to >90%
+    - False positives disappeared entirely
+
 - **Root Cause Analysis**: While we still don't know exactly why the ONNX conversion affected performance so dramatically, we suspect:
-  - Possible precision loss during conversion, especially for the specialized OBB (Oriented Bounding Box) detection format
-  - Subtle differences in how ONNX Runtime handles tensor operations compared to PyTorch
-  
+    - Possible precision loss during conversion, especially for the specialized OBB (Oriented Bounding Box) detection format
+    - Subtle differences in how ONNX Runtime handles tensor operations compared to PyTorch
+
+- **Future Experiments**: We plan to explore several paths to maintain the performance while gaining ONNX efficiency:
+    - Test YOLOv8 OBB as an alternative, which may have more mature ONNX export support
+    - Experiment with different ONNX export parameters and opset versions
+    - Investigate disabling specific optimizations during conversion that might affect OBB detection
+
 - **Key Takeaway**: Always test your models in real-world conditions with the exact inputs they'll receive in production. Even with excellent training metrics, deployment formats can significantly impact performance.
 
 ### Running the Application
@@ -252,18 +264,18 @@ Access points:
 
 ### Future Enhancements
 - **Expand Training Dataset**:
-  - Expand to 1000+ annotated images for improved accuracy
-  - Train model to detect dartboard segments and numbers, not just darts
-  - Create a specialized scoring model separate from dart detection
+    - Expand to 1000+ annotated images for improved accuracy
+    - Train model to detect dartboard segments and numbers, not just darts
+    - Create a specialized scoring model separate from dart detection
 - **Game Modes**:
-  - Add support for different dart games (301, 501, Around the Clock)
-  - Implement multi-player mode with turn tracking
+    - Add support for different dart games (301, 501, Around the Clock)
+    - Implement multi-player mode with turn tracking
 - **Player Features**:
-  - Implement player recognition system
-  - Track player statistics and performance over time
+    - Implement player recognition system
+    - Track player statistics and performance over time
 - **Mobile & Integration**:
-  - Develop mobile app companion for remote scoring
-  - Add support for voice commands and notifications
+    - Develop mobile app companion for remote scoring
+    - Add support for voice commands and notifications
 
 ## License
 
