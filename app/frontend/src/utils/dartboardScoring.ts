@@ -135,6 +135,16 @@ export const isCricketSegment = (segment: number): boolean => {
   return segment >= 15 && segment <= 20 || segment === 25;
 };
 
+// Define a systematic correction offset based on observed data
+// This accounts for the difference between where darts are detected vs where they actually strike
+// Adjusted based on dart placed in the inner bull being detected higher than actual position
+// Previously we tried:
+// - 99.81 which gave us segment 20 (too high)
+// - 160.0 which gave us segment 5 (too low)
+// Let's try a value in the middle
+const DETECTION_OFFSET_X = 13.66;  // Difference from detected X to actual X 
+const DETECTION_OFFSET_Y = 125.0;  // Finding the sweet spot between too high and too low
+
 /**
  * Calculate the dart tip position based on its center, width, height, and angle
  * The dart detection gives us the center of the dart, but we need the tip for scoring
@@ -146,6 +156,11 @@ export const estimateDartTipPosition = (
   height: number, 
   angle_degrees: number
 ): { x: number, y: number } => {
+  // Apply systematic offset correction - account for detection errors
+  // Subtracting the offset since we need to move detected position closer to actual position 
+  const corrected_x = x_center - DETECTION_OFFSET_X;
+  const corrected_y = y_center - DETECTION_OFFSET_Y;
+  
   // The YOLO detection seems to have width/height swapped or rotated.
   // The dart's long axis is height (not width) in our detection
   // We need to fix this by using height for the length and applying a -90° rotation
@@ -161,8 +176,8 @@ export const estimateDartTipPosition = (
   
   // Direction to the dartboard center from the dart center
   const dirToCenter = {
-    x: DARTBOARD_CENTER_X - x_center,
-    y: DARTBOARD_CENTER_Y - y_center
+    x: DARTBOARD_CENTER_X - corrected_x,
+    y: DARTBOARD_CENTER_Y - corrected_y
   };
   
   // Normalize the direction vector
@@ -187,8 +202,8 @@ export const estimateDartTipPosition = (
   
   // Calculate tip position by moving from center in the dart direction
   return {
-    x: x_center + (sign * dartLength * dartDir.x),
-    y: y_center + (sign * dartLength * dartDir.y)
+    x: corrected_x + (sign * dartLength * dartDir.x),
+    y: corrected_y + (sign * dartLength * dartDir.y)
   };
 };
 

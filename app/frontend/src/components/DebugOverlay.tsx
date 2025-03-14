@@ -302,7 +302,7 @@ const DebugOverlay: React.FC<DebugOverlayProps> = ({ detectionResponse, imageId 
             corner[1] * scaleY + offsetY
           ]);
           
-          // Calculate the estimated dart tip position
+          // Calculate the estimated dart tip position with the offset correction
           const tipPosition = estimateDartTipPosition(
             dart.x_center, 
             dart.y_center, 
@@ -311,9 +311,19 @@ const DebugOverlay: React.FC<DebugOverlayProps> = ({ detectionResponse, imageId 
             dart.angle
           );
           
-          // Scale tip position
+          // Also calculate uncorrected position for comparison in debug view
+          const DETECTION_OFFSET_X = 13.66;
+          const DETECTION_OFFSET_Y = 125.0;
+          const rawTipPosition = {
+            x: tipPosition.x + DETECTION_OFFSET_X,
+            y: tipPosition.y + DETECTION_OFFSET_Y
+          };
+          
+          // Scale tip positions for display
           const scaledTipX = tipPosition.x * scaleX + offsetX;
           const scaledTipY = tipPosition.y * scaleY + offsetY;
+          const scaledRawTipX = rawTipPosition.x * scaleX + offsetX;
+          const scaledRawTipY = rawTipPosition.y * scaleY + offsetY;
           
           return (
             <g key={index}>
@@ -335,7 +345,18 @@ const DebugOverlay: React.FC<DebugOverlayProps> = ({ detectionResponse, imageId 
                 strokeWidth="1"
               />
               
-              {/* Draw the estimated dart tip */}
+              {/* Draw the uncorrected dart tip (original calculation) */}
+              <circle 
+                cx={scaledRawTipX}
+                cy={scaledRawTipY}
+                r={5}
+                fill="red"
+                stroke="black"
+                strokeWidth="1"
+                opacity="0.4"
+              />
+              
+              {/* Draw the corrected dart tip with offset applied */}
               <circle 
                 cx={scaledTipX}
                 cy={scaledTipY}
@@ -343,6 +364,17 @@ const DebugOverlay: React.FC<DebugOverlayProps> = ({ detectionResponse, imageId 
                 fill="blue"
                 stroke="white"
                 strokeWidth="1"
+              />
+              
+              {/* Draw a connecting line between raw and corrected tips */}
+              <line
+                x1={scaledRawTipX}
+                y1={scaledRawTipY}
+                x2={scaledTipX}
+                y2={scaledTipY}
+                stroke="purple"
+                strokeWidth="1"
+                strokeDasharray="3,2"
               />
               
               {/* Line connecting center to tip */}
@@ -427,7 +459,7 @@ const DebugOverlay: React.FC<DebugOverlayProps> = ({ detectionResponse, imageId 
                 )}°
               </text>
               
-              {/* Calculate segment based on angle */}
+              {/* Calculate segment based on angle with additional ring info */}
               {(() => {
                 // Same logic as in dartboardScoring.ts
                 let angleDegrees = (Math.atan2(
@@ -439,22 +471,71 @@ const DebugOverlay: React.FC<DebugOverlayProps> = ({ detectionResponse, imageId 
                   angleDegrees += 360;
                 }
                 
+                // Calculate distance ratio to determine ring
+                const distanceFromCenter = Math.sqrt(
+                  Math.pow(tipPosition.x - DARTBOARD_CENTER_X, 2) +
+                  Math.pow(tipPosition.y - DARTBOARD_CENTER_Y, 2)
+                );
+                
+                // Hardcoded values to avoid scope issues
+                // Should match the values in dartboardScoring.ts
+                const radius = 298;
+                const innerBullRatio = 0.035;
+                const outerBullRatio = 0.0764;
+                const tripleInnerRatio = 0.59;
+                const tripleOuterRatio = 0.65;
+                const doubleInnerRatio = 0.93;
+                const doubleOuterRatio = 1.0;
+                
+                const distanceRatio = distanceFromCenter / radius;
+                
+                let ringName = "single";
+                if (distanceRatio <= innerBullRatio) {
+                  ringName = "inner-bull";
+                } else if (distanceRatio <= outerBullRatio) {
+                  ringName = "outer-bull";
+                } else if (
+                  distanceRatio >= tripleInnerRatio && 
+                  distanceRatio <= tripleOuterRatio
+                ) {
+                  ringName = "triple";
+                } else if (
+                  distanceRatio >= doubleInnerRatio && 
+                  distanceRatio <= doubleOuterRatio
+                ) {
+                  ringName = "double";
+                }
+                
                 const segmentIndex = Math.floor(angleDegrees / 18) % 20;
                 const segment = [20, 1, 18, 4, 13, 6, 10, 15, 2, 17, 3, 19, 7, 16, 8, 11, 14, 9, 12, 5][segmentIndex];
                 const isCricketSegment = segment >= 15 && segment <= 20;
                 
                 return (
-                  <text 
-                    x={scaledTipX} 
-                    y={scaledTipY + 45} 
-                    fill={isCricketSegment ? "lime" : "white"} 
-                    fontSize="11"
-                    textAnchor="middle"
-                    stroke="black"
-                    strokeWidth="0.3"
-                  >
-                    Segment: {segment} ({isCricketSegment ? "Cricket!" : "Non-Cricket"})
-                  </text>
+                  <>
+                    <text 
+                      x={scaledTipX} 
+                      y={scaledTipY + 45} 
+                      fill={isCricketSegment ? "lime" : "white"} 
+                      fontSize="11"
+                      textAnchor="middle"
+                      stroke="black"
+                      strokeWidth="0.3"
+                    >
+                      Segment: {segment} ({isCricketSegment ? "Cricket!" : "Non-Cricket"})
+                    </text>
+                    
+                    <text 
+                      x={scaledTipX} 
+                      y={scaledTipY + 60} 
+                      fill="cyan" 
+                      fontSize="11"
+                      textAnchor="middle"
+                      stroke="black" 
+                      strokeWidth="0.3"
+                    >
+                      Ring: {ringName} ({Math.round(distanceRatio * 100)}% of radius)
+                    </text>
+                  </>
                 );
               })()}
             </g>
