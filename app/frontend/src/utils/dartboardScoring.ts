@@ -45,7 +45,7 @@ const DARTBOARD_CONFIG: DartboardCalibration = {
 // These values can be tweaked to adjust the visual overlay and scoring
 export const MANUAL_ADJUSTMENTS = {
   // Rotation adjustment in degrees (negative = counter-clockwise, positive = clockwise)
-  rotationAdjustment: -5,  // Adjust this to rotate the entire dartboard
+  rotationAdjustment: 15,  // Adjust this to rotate the entire dartboard
 
   // Scale factor for rings (values > 1 make rings bigger, < 1 make them smaller)
   ringScaleFactor: 1.0,   // Adjust this to make the rings bigger or smaller
