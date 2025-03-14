@@ -5,6 +5,12 @@ import DebugOverlay from './DebugOverlay';
 interface CameraViewProps {
   onCaptureImage: () => void;
   onDeleteImages: () => void;
+  onToggleAutoMode: () => void;
+  onReset: () => void;
+  onEndRound?: () => void;
+  autoMode: boolean;
+  countdown?: number;
+  roundComplete?: boolean;
   imageUrl?: string;
   isLoading?: boolean;
   errorMessage?: string;
@@ -16,6 +22,12 @@ interface CameraViewProps {
 const CameraView: React.FC<CameraViewProps> = ({
   onCaptureImage,
   onDeleteImages,
+  onToggleAutoMode,
+  onReset,
+  onEndRound,
+  autoMode,
+  countdown = 0,
+  roundComplete = false,
   imageUrl,
   isLoading = false,
   errorMessage,
@@ -139,7 +151,23 @@ const DOUBLE_RING_RATIO = 1.0;
   return (
     <section className="w-full bg-white rounded-lg shadow-md p-4 flex flex-col">
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-semibold">Camera View</h2>
+        <div className="flex items-center">
+          <h2 className="text-xl font-semibold mr-4">Camera View</h2>
+          {autoMode && (
+            <div className="flex items-center">
+              <div className={`text-sm font-medium px-3 py-1 rounded-full ${
+                roundComplete 
+                  ? 'bg-green-100 text-green-800' 
+                  : 'bg-blue-100 text-blue-800'
+              }`}>
+                {roundComplete 
+                  ? 'Round Complete! Next round in ' 
+                  : 'Next photo in '}
+                <span className="font-bold">{countdown}s</span>
+              </div>
+            </div>
+          )}
+        </div>
         <div className="flex items-center space-x-4">
           {/* Calibration button */}
           {showDebugOverlay && (
@@ -262,20 +290,50 @@ const DOUBLE_RING_RATIO = 1.0;
 
       <div className="flex flex-wrap justify-center gap-3">
         <button
-          onClick={onCaptureImage}
+          onClick={onToggleAutoMode}
           disabled={isLoading}
-          className={`bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-lg ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+          className={`${autoMode ? 'bg-green-600 hover:bg-green-700' : 'bg-green-500 hover:bg-green-600'} text-white py-2 px-4 rounded-lg ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+        >
+          {autoMode ? 'Stop Auto' : 'Automatic'}
+        </button>
+        {autoMode && onEndRound && (
+          <button
+            onClick={onEndRound}
+            disabled={isLoading || roundComplete}
+            className={`bg-purple-500 hover:bg-purple-600 text-white py-2 px-4 rounded-lg ${(isLoading || roundComplete) ? 'opacity-50 cursor-not-allowed' : ''}`}
+          >
+            End Round
+          </button>
+        )}
+        <button
+          onClick={onCaptureImage}
+          disabled={isLoading || autoMode}
+          className={`bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-lg ${(isLoading || autoMode) ? 'opacity-50 cursor-not-allowed' : ''}`}
         >
           Capture Image
         </button>
         <button
           onClick={onDeleteImages}
-          disabled={isLoading}
-          className={`bg-red-500 hover:bg-red-600 text-white py-2 px-4 rounded-lg ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+          disabled={isLoading || autoMode}
+          className={`bg-red-500 hover:bg-red-600 text-white py-2 px-4 rounded-lg ${(isLoading || autoMode) ? 'opacity-50 cursor-not-allowed' : ''}`}
         >
           Delete Images
         </button>
+        <button
+          onClick={onReset}
+          disabled={isLoading}
+          className={`bg-yellow-500 hover:bg-yellow-600 text-white py-2 px-4 rounded-lg ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+        >
+          Reset All
+        </button>
       </div>
+      
+      {autoMode && roundComplete && (
+        <div className="mt-4 p-3 bg-green-100 border border-green-300 rounded-lg text-center text-green-800">
+          <p className="text-lg font-semibold">Round Complete! 🎯</p>
+          <p className="text-sm">Scores have been updated. Next round starting in {countdown} seconds...</p>
+        </div>
+      )}
     </section>
   );
 };

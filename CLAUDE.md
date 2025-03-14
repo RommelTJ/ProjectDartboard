@@ -147,34 +147,42 @@ Access the application at:
 - Created dockerized React/TypeScript frontend
 - Implemented FastAPI backend
 
-### Day 2: Model Integration & Single Dart Detection 🔜
-- Implement manual image capture button on frontend
-- Integrate ONNX model (from runs/obb/train12/weights/best.onnx) into FastAPI
-- Create endpoint to process images and detect darts
-- Build Cricket scoring logic for a single dart
-- Display detected dart positions and scores on frontend
+### Day 2: Model Integration & Single Dart Detection ✓
+- Implemented manual image capture button on frontend
+- Integrated object detection model into FastAPI
+- Created endpoints to process images and detect darts
+- Built Cricket scoring logic for a single dart
+- Displayed detected dart positions and scores on frontend
 
-### Day 3: Multi-Dart Game Experience 🔜
-- Add automatic detection for 3-dart throws
-- Implement game state management
-- Create scoring history and visualization
-- Add manual override and bounce-out handling
+### Day 3: Multi-Dart Game Experience ✓
+- Added automatic detection for 3-dart throws
+- Implemented game state management 
+- Created automatic scoring system with adaptive capture timing
+- Added round completion indicators and manual override
 
-### Day 4: Presentation & Polish 🔜
-- Create compelling slides and demo
-- Add visual polish and UI improvements
-- Prepare live demonstration
-- Document the system and approach
+### Day 4: Hackathon Completed ✓
+- Fixed bugs and improved user interface
+- Added visual polish and UI improvements
+- Completed documentation
+- Successfully demonstrated working system
 
 ## Future Expansion (Post-Hackathon)
+- Fix minor bugs in the automatic capture system 
 - Complete annotation of 1000 images for improved model performance
-- Add multiplayer features for remote games
-- Implement real-time scoring updates
+- Add support for different game types (301, 501)
+- Create proper game state management with player profiles
+- Add manual scoring override for cases where detection fails
+- Implement web socket-based real-time updates
 - Integrate with LED lighting feedback system
 - Consider commercial opportunities in dart communities
 
 ## Technical Implementation Notes
-- The ONNX model performs detection with 99.1% mAP50 accuracy
-- Frontend will capture images from webcam initially, later from Reolink camera
-- FastAPI will handle both image processing and game state
+- The model performs detection with 99.1% mAP50 accuracy
+- FastAPI handles both image processing and game state management
 - Docker ensures consistent deployment environment on the mini PC
+- Automatic scoring system adapts timing based on dart detection:
+  - 30-second intervals when no darts are detected
+  - 5-second intervals when some darts are detected
+  - Round completion when 3 darts are detected
+- Manual round completion available when automatic detection misses darts
+- Visual countdown and status indicators show system state

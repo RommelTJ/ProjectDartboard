@@ -2,7 +2,7 @@
 
 Pi Day 2025 Project
 
-Version: 0.8.0 - 14 Mar 2025
+Version: 1.0.0 - 14 Mar 2025
 
 ## Project Overview
 
@@ -169,6 +169,13 @@ based on game rules, and provides visual feedback through cabinet lighting.
 - Implemented FastAPI backend with API documentation
 - Set up Docker Compose for easy deployment
 
+### Automated Scoring ✅
+- Implemented automatic dart detection with continuous image capture
+- Created intelligent timing system that speeds up capture rate when darts are detected
+- Added manual round completion option for cases where all darts aren't detected
+- Integrated visual countdown and round completion indicators
+- Built a complete Cricket scoring system with visual marks
+
 ### Implementation Challenges & Solutions
 
 #### The Precision Scoring Challenge 🎯
@@ -238,10 +245,10 @@ Access points:
 ## Next Steps
 
 ### Immediate Tasks
-- Fine-tune dart board region detection
-- Implement scoring logic for Cricket and other games
-- Add user interface for game selection and score tracking
-- Create system for differentiating between sets of throws
+- Fix minor bugs in automatic scoring mode
+- Add support for different dart games (301, 501)
+- Create proper game management with player selection
+- Add support for manual score override when detection is imperfect
 
 ### Future Enhancements
 - **Expand Training Dataset**:

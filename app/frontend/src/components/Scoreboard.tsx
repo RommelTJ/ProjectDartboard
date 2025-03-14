@@ -94,7 +94,7 @@ const Scoreboard: React.FC<ScoreboardProps> = ({ detectionResponse, dartScores }
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-semibold">Cricket Scoreboard</h2>
         <button 
-          className="bg-red-500 hover:bg-red-600 text-white py-1 px-3 rounded-lg text-sm"
+          className="bg-red-500 hover:bg-red-600 text-white py-1 px-3 rounded-lg text-sm scoreboard-reset"
           onClick={handleReset}
         >
           Erase
