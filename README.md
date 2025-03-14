@@ -171,6 +171,33 @@ based on game rules, and provides visual feedback through cabinet lighting.
 
 ### Implementation Challenges & Solutions
 
+#### The Precision Scoring Challenge 🎯
+One of the most challenging aspects of this project was accurately mapping dart positions to their correct scores:
+
+- **The Core Problem**: While our model excels at detecting darts (99.1% mAP50), precisely determining which segment and ring a dart has landed in proved exceptionally difficult:
+  - The camera views the dartboard at an angle, creating perspective distortion
+  - Circular dartboard appears as an ellipse in the camera view
+  - Segment boundaries aren't straight lines in the distorted view
+  - Different lighting conditions can affect dart tip visibility
+
+- **Attempted Solutions**:
+  - **Calibration Points**: Initially implemented a system to mark key points (center, bulls, rings) and calculate distances/ratios
+  - **Homography Transformation**: Tried to use a mathematical transformation to correct for perspective distortion
+  - **Computer Vision Segmentation**: Attempted to detect segment boundaries directly from the image
+  - **Neural Network Approach**: Considered training a second model just for scoring
+  
+- **Current Solution**: A pragmatic manual adjustment system
+  - Implemented adjustable parameters for rotation, scaling, and positioning
+  - Added a debug overlay to visualize scoring boundaries and dart positions
+  - Created simple manual offset controls to fine-tune detection
+  - This approach allows quick visual adjustments without complex mathematics
+  
+- **Lessons Learned**:
+  - Sometimes simpler approaches are more robust than mathematically elegant ones
+  - Visual debugging tools are essential for fine-tuning spatial algorithms
+  - User-adjustable parameters provide flexibility for different mounting positions
+  - A well-designed overlay can make complex scoring intuitive to adjust
+
 #### The ONNX vs PyTorch Mystery 🕵️
 During our hackathon implementation, we encountered an unexpected challenge that demonstrates the importance of real-world testing:
 
@@ -217,10 +244,19 @@ Access points:
 - Create system for differentiating between sets of throws
 
 ### Future Enhancements
-- Expand training dataset to improve accuracy
-- Add support for additional game modes
-- Implement player recognition
-- Develop mobile app companion
+- **Expand Training Dataset**:
+  - Expand to 1000+ annotated images for improved accuracy
+  - Train model to detect dartboard segments and numbers, not just darts
+  - Create a specialized scoring model separate from dart detection
+- **Game Modes**:
+  - Add support for different dart games (301, 501, Around the Clock)
+  - Implement multi-player mode with turn tracking
+- **Player Features**:
+  - Implement player recognition system
+  - Track player statistics and performance over time
+- **Mobile & Integration**:
+  - Develop mobile app companion for remote scoring
+  - Add support for voice commands and notifications
 
 ## License
 
