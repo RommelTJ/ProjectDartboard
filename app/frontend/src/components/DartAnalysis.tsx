@@ -1,6 +1,7 @@
 import React from 'react';
 import { DetectionResponse } from '../api/types';
-import { getDartScore, formatDartScore, isCricketSegment } from '../utils/dartboardScoring';
+import { getDartScore, isCricketSegment } from '../utils/dartboardScoring';
+import DartCard from './DartCard';
 
 interface DartAnalysisProps {
   detectionResponse?: DetectionResponse;
@@ -45,14 +46,10 @@ const DartAnalysis: React.FC<DartAnalysisProps> = ({ detectionResponse, showDebu
               {dartScores.length > 0 ? (
                 <div className="space-y-2">
                   {dartScores.map((score, i) => (
-                    <div key={i} className={`p-3 rounded shadow-sm border ${isCricketSegment(score.segment) ? 'bg-blue-100 border-blue-300' : 'bg-white border-gray-300'}`}>
-                      <h4 className="font-medium">Dart #{score.dartIndex + 1}: {formatDartScore(score)}</h4>
-                      {isCricketSegment(score.segment) ? (
-                        <p className="text-green-700 font-medium">Cricket Segment!</p>
-                      ) : (
-                        <p className="text-gray-500">Not a cricket segment</p>
-                      )}
-                    </div>
+                    <DartCard 
+                      key={i} 
+                      score={score} 
+                    />
                   ))}
                   
                   {cricketScores.length === 0 && dartScores.length > 0 && (
@@ -69,16 +66,13 @@ const DartAnalysis: React.FC<DartAnalysisProps> = ({ detectionResponse, showDebu
                 <h3 className="font-medium text-lg mb-2">Dart Details</h3>
                 {detectionResponse.detections.length > 0 ? (
                   <div className="space-y-4">
-                    {detectionResponse.detections.map((dart, index) => (
-                      <div key={index} className="bg-white p-3 rounded shadow-sm border border-gray-300">
-                        <h4 className="font-medium">Dart #{index + 1}</h4>
-                        <div className="grid grid-cols-2 gap-x-4 gap-y-1 mt-2 text-sm">
-                          <p>Center: ({dart.x_center.toFixed(2)}, {dart.y_center.toFixed(2)})</p>
-                          <p>Size: {dart.width.toFixed(2)} × {dart.height.toFixed(2)}</p>
-                          <p>Angle: {dart.angle.toFixed(2)}°</p>
-                          <p>Confidence: {(dart.confidence * 100).toFixed(1)}%</p>
-                        </div>
-                      </div>
+                    {dartScores.map((score, i) => (
+                      <DartCard 
+                        key={i} 
+                        score={score} 
+                        showDetails={true}
+                        detection={detectionResponse.detections[score.dartIndex]}
+                      />
                     ))}
                   </div>
                 ) : (
