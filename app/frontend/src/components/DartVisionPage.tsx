@@ -23,6 +23,8 @@ const DartVisionPage: React.FC = () => {
   const [autoMode, setAutoMode] = useState<boolean>(false);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const captureIntervalRef = useRef<number>(30000); // Start with 30 seconds
+  const [countdown, setCountdown] = useState<number>(30);
+  const [roundComplete, setRoundComplete] = useState<boolean>(false);
 
   // Fetch the latest image on component mount
   useEffect(() => {
@@ -54,8 +56,9 @@ const DartVisionPage: React.FC = () => {
           captureIntervalRef.current = 5000; // 5 seconds
         }
         
-        // If three darts are detected, update scoreboard and reset capture interval
+        // If three darts are detected, show round complete and reset capture interval
         if (dartCount >= 3) {
+          setRoundComplete(true);
           captureIntervalRef.current = 30000; // Back to 30 seconds
         }
       }
@@ -93,7 +96,7 @@ const DartVisionPage: React.FC = () => {
     };
   }, [imageUrl]);
 
-  // Schedule the next image capture
+  // Schedule the next image capture with countdown
   const scheduleNextCapture = () => {
     if (timerRef.current) {
       clearTimeout(timerRef.current);
@@ -101,11 +104,29 @@ const DartVisionPage: React.FC = () => {
     
     if (!autoMode) return;
     
+    // Set initial countdown value based on current interval
+    const secondsInterval = captureIntervalRef.current / 1000;
+    setCountdown(secondsInterval);
+    
+    // Create countdown timer that updates every second
+    let secondsLeft = secondsInterval;
+    const countdownInterval = setInterval(() => {
+      secondsLeft -= 1;
+      setCountdown(secondsLeft);
+      
+      if (secondsLeft <= 0 || !autoMode) {
+        clearInterval(countdownInterval);
+      }
+    }, 1000);
+    
+    // Schedule the actual capture
     timerRef.current = setTimeout(async () => {
       if (autoMode) {
+        setRoundComplete(false); // Reset round complete status when taking new photo
         await handleCaptureImage();
         scheduleNextCapture();
       }
+      clearInterval(countdownInterval);
     }, captureIntervalRef.current);
   };
 
@@ -227,6 +248,10 @@ const DartVisionPage: React.FC = () => {
       timerRef.current = null;
     }
     
+    // Reset state
+    setCountdown(30);
+    setRoundComplete(false);
+    
     // Reset scoreboard
     const scoreboardResetButton = document.querySelector('.scoreboard-reset') as HTMLButtonElement;
     if (scoreboardResetButton) {
@@ -235,6 +260,20 @@ const DartVisionPage: React.FC = () => {
     
     // Delete all images
     await handleDeleteImages();
+  };
+  
+  // Manually end the current round
+  const handleEndRound = () => {
+    if (!autoMode) return;
+    
+    // Set round complete
+    setRoundComplete(true);
+    
+    // Reset to 30 second interval
+    captureIntervalRef.current = 30000;
+    
+    // Restart the countdown
+    scheduleNextCapture();
   };
 
   // Analyze the current image
@@ -271,7 +310,10 @@ const DartVisionPage: React.FC = () => {
             onDeleteImages={handleDeleteImages}
             onToggleAutoMode={handleToggleAutoMode}
             onReset={handleReset}
+            onEndRound={handleEndRound}
             autoMode={autoMode}
+            countdown={countdown}
+            roundComplete={roundComplete}
             imageUrl={imageUrl}
             isLoading={isLoading}
             errorMessage={errorMessage}
