@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import CameraView from './CameraView';
 import DartAnalysis from './DartAnalysis';
 import Scoreboard from './Scoreboard';
@@ -18,10 +18,22 @@ const DartVisionPage: React.FC = () => {
   
   // State for dart scores (derived from detectionResponse)
   const [dartScores, setDartScores] = useState<Array<ReturnType<typeof getDartScore> & { dartIndex: number }>>([]);
+  
+  // Automatic mode state
+  const [autoMode, setAutoMode] = useState<boolean>(false);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const captureIntervalRef = useRef<number>(30000); // Start with 30 seconds
 
   // Fetch the latest image on component mount
   useEffect(() => {
     fetchLatestImage();
+    
+    // Clean up timer on unmount
+    return () => {
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+      }
+    };
   }, []);
   
   // Calculate dart scores when detection response changes
@@ -32,10 +44,39 @@ const DartVisionPage: React.FC = () => {
         dartIndex: index
       }));
       setDartScores(scores);
+      
+      // Auto mode dart detection logic
+      if (autoMode) {
+        const dartCount = detectionResponse.detections.length;
+        
+        // If at least one dart is detected, switch to faster interval
+        if (dartCount > 0 && dartCount < 3) {
+          captureIntervalRef.current = 5000; // 5 seconds
+        }
+        
+        // If three darts are detected, update scoreboard and reset capture interval
+        if (dartCount >= 3) {
+          captureIntervalRef.current = 30000; // Back to 30 seconds
+        }
+      }
     } else {
       setDartScores([]);
     }
-  }, [detectionResponse]);
+  }, [detectionResponse, autoMode]);
+  
+  // Handle changes in auto mode
+  useEffect(() => {
+    if (autoMode) {
+      // Start the automatic capture cycle
+      scheduleNextCapture();
+    } else {
+      // Clean up timer when auto mode is turned off
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+        timerRef.current = null;
+      }
+    }
+  }, [autoMode]);
 
   // Convert blob to URL for display
   const createImageUrl = (blob: Blob): string => {
@@ -51,6 +92,22 @@ const DartVisionPage: React.FC = () => {
       }
     };
   }, [imageUrl]);
+
+  // Schedule the next image capture
+  const scheduleNextCapture = () => {
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+    }
+    
+    if (!autoMode) return;
+    
+    timerRef.current = setTimeout(async () => {
+      if (autoMode) {
+        await handleCaptureImage();
+        scheduleNextCapture();
+      }
+    }, captureIntervalRef.current);
+  };
 
   // Handle API errors
   const handleApiError = (error: any) => {
@@ -131,6 +188,55 @@ const DartVisionPage: React.FC = () => {
     }
   };
 
+  // Toggle automatic mode
+  const handleToggleAutoMode = async () => {
+    // If turning on auto mode, first reset everything
+    if (!autoMode) {
+      // Reset scoreboard first (via ref to be added to Scoreboard)
+      const scoreboardResetButton = document.querySelector('.scoreboard-reset') as HTMLButtonElement;
+      if (scoreboardResetButton) {
+        scoreboardResetButton.click();
+      }
+      
+      // Delete all images
+      await handleDeleteImages();
+      
+      // Set interval back to 30 seconds
+      captureIntervalRef.current = 30000;
+      
+      // Start auto mode
+      setAutoMode(true);
+    } else {
+      // Turn off auto mode, clear timer
+      setAutoMode(false);
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+        timerRef.current = null;
+      }
+    }
+  };
+
+  // Reset everything
+  const handleReset = async () => {
+    // Turn off auto mode
+    setAutoMode(false);
+    
+    // Clear timer
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+      timerRef.current = null;
+    }
+    
+    // Reset scoreboard
+    const scoreboardResetButton = document.querySelector('.scoreboard-reset') as HTMLButtonElement;
+    if (scoreboardResetButton) {
+      scoreboardResetButton.click();
+    }
+    
+    // Delete all images
+    await handleDeleteImages();
+  };
+
   // Analyze the current image
   const handleAnalyzeImage = async () => {
     if (!imageFile) {
@@ -163,6 +269,9 @@ const DartVisionPage: React.FC = () => {
           <CameraView
             onCaptureImage={handleCaptureImage}
             onDeleteImages={handleDeleteImages}
+            onToggleAutoMode={handleToggleAutoMode}
+            onReset={handleReset}
+            autoMode={autoMode}
             imageUrl={imageUrl}
             isLoading={isLoading}
             errorMessage={errorMessage}

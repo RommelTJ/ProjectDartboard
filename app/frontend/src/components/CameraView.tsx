@@ -5,6 +5,9 @@ import DebugOverlay from './DebugOverlay';
 interface CameraViewProps {
   onCaptureImage: () => void;
   onDeleteImages: () => void;
+  onToggleAutoMode: () => void;
+  onReset: () => void;
+  autoMode: boolean;
   imageUrl?: string;
   isLoading?: boolean;
   errorMessage?: string;
@@ -16,6 +19,9 @@ interface CameraViewProps {
 const CameraView: React.FC<CameraViewProps> = ({
   onCaptureImage,
   onDeleteImages,
+  onToggleAutoMode,
+  onReset,
+  autoMode,
   imageUrl,
   isLoading = false,
   errorMessage,
@@ -262,18 +268,32 @@ const DOUBLE_RING_RATIO = 1.0;
 
       <div className="flex flex-wrap justify-center gap-3">
         <button
-          onClick={onCaptureImage}
+          onClick={onToggleAutoMode}
           disabled={isLoading}
-          className={`bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-lg ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+          className={`${autoMode ? 'bg-green-600 hover:bg-green-700' : 'bg-green-500 hover:bg-green-600'} text-white py-2 px-4 rounded-lg ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+        >
+          {autoMode ? 'Stop Auto' : 'Automatic'}
+        </button>
+        <button
+          onClick={onCaptureImage}
+          disabled={isLoading || autoMode}
+          className={`bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-lg ${(isLoading || autoMode) ? 'opacity-50 cursor-not-allowed' : ''}`}
         >
           Capture Image
         </button>
         <button
           onClick={onDeleteImages}
-          disabled={isLoading}
-          className={`bg-red-500 hover:bg-red-600 text-white py-2 px-4 rounded-lg ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+          disabled={isLoading || autoMode}
+          className={`bg-red-500 hover:bg-red-600 text-white py-2 px-4 rounded-lg ${(isLoading || autoMode) ? 'opacity-50 cursor-not-allowed' : ''}`}
         >
           Delete Images
+        </button>
+        <button
+          onClick={onReset}
+          disabled={isLoading}
+          className={`bg-yellow-500 hover:bg-yellow-600 text-white py-2 px-4 rounded-lg ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+        >
+          Reset All
         </button>
       </div>
     </section>
