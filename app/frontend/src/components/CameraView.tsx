@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { DetectionResponse } from '../api';
 import DebugOverlay from './DebugOverlay';
 
@@ -9,6 +9,8 @@ interface CameraViewProps {
   isLoading?: boolean;
   errorMessage?: string;
   detectionResponse?: DetectionResponse;
+  showDebugOverlay: boolean;
+  setShowDebugOverlay: (show: boolean) => void;
 }
 
 const CameraView: React.FC<CameraViewProps> = ({
@@ -17,11 +19,10 @@ const CameraView: React.FC<CameraViewProps> = ({
   imageUrl,
   isLoading = false,
   errorMessage,
-  detectionResponse
+  detectionResponse,
+  showDebugOverlay,
+  setShowDebugOverlay
 }) => {
-  // Default debug overlay to off
-  const [showDebugOverlay, setShowDebugOverlay] = useState<boolean>(false);
-
   const toggleDebugOverlay = () => {
     setShowDebugOverlay(!showDebugOverlay);
   };

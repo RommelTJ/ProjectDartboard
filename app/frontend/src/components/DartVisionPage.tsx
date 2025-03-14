@@ -3,6 +3,7 @@ import CameraView from './CameraView';
 import DartAnalysis from './DartAnalysis';
 import apiClient from '../api';
 import { DetectionResponse } from '../api/types';
+import { useDebugOverlay } from '../hooks/useDebugOverlay';
 
 const DartVisionPage: React.FC = () => {
   // State management
@@ -11,6 +12,7 @@ const DartVisionPage: React.FC = () => {
   const [detectionResponse, setDetectionResponse] = useState<DetectionResponse | undefined>(undefined);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
+  const { showDebugOverlay, setShowDebugOverlay } = useDebugOverlay(false);
 
   // Fetch the latest image on component mount
   useEffect(() => {
@@ -147,12 +149,17 @@ const DartVisionPage: React.FC = () => {
             isLoading={isLoading}
             errorMessage={errorMessage}
             detectionResponse={detectionResponse}
+            showDebugOverlay={showDebugOverlay}
+            setShowDebugOverlay={setShowDebugOverlay}
           />
         </div>
 
         {/* AI Analysis (1/3) */}
         <div className="w-full md:w-1/3">
-          <DartAnalysis detectionResponse={detectionResponse} />
+          <DartAnalysis 
+            detectionResponse={detectionResponse} 
+            showDebugOverlay={showDebugOverlay}
+          />
         </div>
       </main>
 
