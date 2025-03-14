@@ -8,9 +8,9 @@ interface DartAnalysisProps {
 }
 
 const DartAnalysis: React.FC<DartAnalysisProps> = ({ detectionResponse, showDebugOverlay }) => {
-  // Calculate scores for detected darts
+  // Calculate scores for detected darts with tip estimation
   const dartScores = detectionResponse?.detections.map((dart, index) => ({
-    ...getDartScore(dart.x_center, dart.y_center),
+    ...getDartScore(dart.x_center, dart.y_center, dart.width, dart.height, dart.angle),
     dartIndex: index
   })) || [];
   
