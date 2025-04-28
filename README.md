@@ -2,7 +2,7 @@
 
 Pi Day 2025 Project
 
-Version: 1.0.1 - 14 Mar 2025
+Version: 1.1.0 - 27 Apr 2025
 
 ## Project Overview
 
