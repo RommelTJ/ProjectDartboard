@@ -1,5 +1,66 @@
-path: C:\Users\me\Documents\GitHub\ProjectDartboard\training\phaseTwoFullDataset\dart_dataset_v2  # dataset root directory
-train: train/images  # train images relative to 'path'
-val: val/images  # val images relative to 'path'
+path: C:\Users\me\Documents\GitHub\ProjectDartboard\training\phaseTwoFullDataset\dart_dataset_v2
+train: train/images
+val: val/images
 names:
-  0: dart
+  0: 10_double
+  1: 10_single
+  2: 10_triple
+  3: 11_double
+  4: 11_single
+  5: 11_triple
+  6: 12_double
+  7: 12_single
+  8: 12_triple
+  9: 13_double
+  10: 13_single
+  11: 13_triple
+  12: 14_double
+  13: 14_single
+  14: 14_triple
+  15: 15_double
+  16: 15_single
+  17: 15_triple
+  18: 16_double
+  19: 16_single
+  20: 16_triple
+  21: 17_double
+  22: 17_single
+  23: 17_triple
+  24: 18_double
+  25: 18_single
+  26: 18_triple
+  27: 19_double
+  28: 19_single
+  29: 19_triple
+  30: 1_double
+  31: 1_single
+  32: 1_triple
+  33: 20_double
+  34: 20_single
+  35: 20_triple
+  36: 2_double
+  37: 2_single
+  38: 2_triple
+  39: 3_double
+  40: 3_single
+  41: 3_triple
+  42: 4_double
+  43: 4_single
+  44: 4_triple
+  45: 5_double
+  46: 5_single
+  47: 5_triple
+  48: 6_double
+  49: 6_single
+  50: 6_triple
+  51: 7_double
+  52: 7_single
+  53: 7_triple
+  54: 8_double
+  55: 8_single
+  56: 8_triple
+  57: 9_double
+  58: 9_single
+  59: 9_triple
+  60: inner_bull
+  61: outer_bull
